@@ -78,31 +78,31 @@ class ScanNetpp(DataParser):
     config: ScanNetppDataParserConfig
 
     def _generate_dataparser_outputs(self, split="train"):
-        assert self.config.data.exists(), f"Data directory {self.config.data} does not exist."
-        meta = load_from_json(self.config.data / self.config.transforms_path)
-        data_dir = self.config.data / self.config.images_dir
-        mask_dir = self.config.data / self.config.masks_dir
+        assert self.config.data.exists(), f"Data directory {self.config.data} does not exist." #check if '/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/scene_id' exists
+        meta = load_from_json(self.config.data / self.config.transforms_path) #these are the meta data saved in combination with each image. 
+        data_dir = self.config.data / self.config.images_dir #'/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/56a0ec536c/dslr/resized_images'
+        mask_dir = self.config.data / self.config.masks_dir #'/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/56a0ec536c/dslr/resized_anon_masks'
 
-        image_filenames = []
-        mask_filenames = []
-        poses = []
-        i_train = []
-        i_eval = []
+        image_filenames = [] #list of all paths to frames in scene
+        mask_filenames = [] #list of all paths to masks in scene
+        poses = [] #list of all extrinsic parameters in scene
+        i_train = [] #which indices in frames (defined a few lines later) belong to the train set
+        i_eval = [] #which indices in frames (defined a few lines later) belong to the eval set
         # sort the frames by fname
-        frames = meta["frames"] + meta["test_frames"]
-        test_frames = [f["file_path"] for f in meta["test_frames"]]
-        frames.sort(key=lambda x: x["file_path"])
+        frames = meta["frames"] + meta["test_frames"] #frames corresponds to frames and test_frames combined
+        test_frames = [f["file_path"] for f in meta["test_frames"]] #just the names of the test frames
+        frames.sort(key=lambda x: x["file_path"]) #sort frames by file name
 
         for idx, frame in enumerate(frames):
             filepath = Path(frame["file_path"])
-            fname = data_dir / filepath
+            fname = data_dir / filepath #'/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/56a0ec536c/dslr/resized_images/fname.JPG'
 
-            image_filenames.append(fname)
-            poses.append(np.array(frame["transform_matrix"]))
+            image_filenames.append(fname) #add fname to list of all paths to frames in scene
+            poses.append(np.array(frame["transform_matrix"])) #add to list of all extrinsic parameters in scene
             if meta.get("has_mask", True) and "mask_path" in frame:
                 mask_filepath = Path(frame["mask_path"])
-                mask_fname = mask_dir / mask_filepath
-                mask_filenames.append(mask_fname)
+                mask_fname = mask_dir / mask_filepath #'/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/56a0ec536c/dslr/resized_anon_masks/mname.png'
+                mask_filenames.append(mask_fname) #add to list of all paths to masks in scene
 
             if frame["file_path"] in test_frames:
                 i_eval.append(idx)
@@ -125,10 +125,10 @@ class ScanNetpp(DataParser):
             orientation_method = meta["orientation_override"]
             CONSOLE.log(f"[yellow] Dataset is overriding orientation method to {orientation_method}")
         else:
-            orientation_method = self.config.orientation_method
+            orientation_method = self.config.orientation_method #'up'
 
-        poses = torch.from_numpy(np.array(poses).astype(np.float32))
-        poses, transform_matrix = camera_utils.auto_orient_and_center_poses(
+        poses = torch.from_numpy(np.array(poses).astype(np.float32)) #poses to np array of shape (#number frames in scene, 4, 4)
+        poses, transform_matrix = camera_utils.auto_orient_and_center_poses( #auto orient the poses
             poses,
             method=orientation_method,
             center_method=self.config.center_method,
@@ -150,7 +150,7 @@ class ScanNetpp(DataParser):
         poses = poses[idx_tensor]
 
         # in x,y,z order
-        # assumes that the scene is centered at the origin
+        # within which world coordinates does the scene lie? assumes that the scene is centered at the origin
         if not self.config.auto_scale_poses:
             # Set aabb_scale to scene_scale * the max of the absolute values of the poses
             aabb_scale = self.config.scene_scale * float(torch.max(torch.abs(poses[:, :3, 3])))
@@ -182,7 +182,7 @@ class ScanNetpp(DataParser):
             p2=float(meta["p2"]) if "p2" in meta else 0.0,
         )
 
-        cameras = Cameras(
+        cameras = Cameras( #save intrinsic parameters of camera into Cameras
             fx=fx,
             fy=fy,
             cx=cx,

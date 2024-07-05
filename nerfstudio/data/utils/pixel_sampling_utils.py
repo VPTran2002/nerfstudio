@@ -18,7 +18,7 @@ import math
 from typing import List
 
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor
 
 

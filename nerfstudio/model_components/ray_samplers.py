@@ -20,7 +20,7 @@ from abc import abstractmethod
 from typing import Any, Callable, List, Optional, Protocol, Tuple, Union
 
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from nerfacc import OccGridEstimator
 from torch import Tensor, nn
 
@@ -305,9 +305,9 @@ class PDFSampler(Sampler):
         weights = weights[..., 0] + self.histogram_padding
 
         # Add small offset to rays with zero weight to prevent NaNs
-        weights_sum = torch.sum(weights, dim=-1, keepdim=True)
+        weights_sum = torch.sum(weights, dim=-1, keepdim=True) # type: ignore
         padding = torch.relu(eps - weights_sum)
-        weights = weights + padding / weights.shape[-1]
+        weights = weights + padding / weights.shape[-1] # type: ignore
         weights_sum += padding
 
         pdf = weights / weights_sum

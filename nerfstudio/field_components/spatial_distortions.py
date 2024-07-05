@@ -19,7 +19,7 @@ from typing import Optional, Union
 
 import torch
 from functorch import jacrev, vmap
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor, nn
 
 from nerfstudio.utils.math import Gaussians

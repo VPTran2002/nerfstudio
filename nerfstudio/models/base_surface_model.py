@@ -167,7 +167,7 @@ class SurfaceModel(Model):
         param_groups["field_background"] = (
             [self.field_background]
             if isinstance(self.field_background, Parameter)
-            else list(self.field_background.parameters())
+            else list(self.field_background.parameters()) # type: ignore
         )
         return param_groups
 

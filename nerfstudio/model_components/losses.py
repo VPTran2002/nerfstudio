@@ -19,7 +19,7 @@ from enum import Enum
 from typing import Dict, Literal, Optional, Tuple, cast
 
 import torch
-from jaxtyping import Bool, Float
+from jaxtyping import Bool, Float # type: ignore
 from torch import Tensor, nn
 
 from nerfstudio.cameras.rays import RaySamples

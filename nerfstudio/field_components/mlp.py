@@ -19,7 +19,7 @@ from typing import Literal, Optional, Set, Tuple, Union
 
 import numpy as np
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor, nn
 
 from nerfstudio.field_components.base_field_component import FieldComponent

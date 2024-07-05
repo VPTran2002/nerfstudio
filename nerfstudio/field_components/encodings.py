@@ -23,7 +23,7 @@ from typing import Literal, Optional, Sequence
 import numpy as np
 import torch
 import torch.nn.functional as F
-from jaxtyping import Float, Int, Shaped
+from jaxtyping import Float, Int, Shaped # type: ignore
 from torch import Tensor, nn
 
 from nerfstudio.field_components.base_field_component import FieldComponent

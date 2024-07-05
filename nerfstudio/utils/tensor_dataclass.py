@@ -307,7 +307,7 @@ class TensorDataclass:
             custom_tensor_dims_fn,
         )
 
-        return dataclasses.replace(self_dc, **new_fields)
+        return dataclasses.replace(self_dc, **new_fields) # type: ignore
 
     def _apply_fn_to_dict(
         self,

@@ -4,6 +4,9 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+
+
+
     {
       "name": "Launch Chrome against localhost",
       "request": "launch",
@@ -92,6 +95,316 @@
       "program": "nerfstudio/scripts/train.py",
       "console": "integratedTerminal",
       "args": ["semantic_nerf"]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/56a0ec536c",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenesVPNouri/data_segmentation/56a0ec536c"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment gt 079a326597",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/gt/data_segmentation/079a326597"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment MIT masks 079a326597",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb 079a326597_smoothed_200",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597_smoothed_200"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb 079a326597 GT",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/gt/data_segmentation/079a326597"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb 079a326597 presentation 1",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597_presentation_1"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb 079a326597 presentation 0",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597_presentation_0"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb 56a0ec536c good",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/56a0ec536c",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/0560ec536c_5000th_5C_0.3G_0.7D_15TL_10_minKP"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb 079a326597 presentation fucking bad",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597_fucking_bad"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb loading model",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment_after_rgb/2024-06-29_080142/nerfstudio_models",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/56a0ec536c",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenesVPNouri/data_segmentation/56a0ec536c"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb_only_loading loading model 079a326597_smoothed_200",
+      "type": "python",
+      "request": "launch",
+      "program": "generateMasks4Eval.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb_only_loading",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment_after_rgb/2024-07-02_073536/nerfstudio_models",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597_smoothed_200"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb_only_loading loading model 079a326597 presentation fucking bad",
+      "type": "python",
+      "request": "launch",
+      "program": "generateMasks4Eval.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb_only_loading",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment_after_rgb/2024-07-02_214730/nerfstudio_models",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597_fucking_bad"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb_only_loading loading model 56a0ec536c presentation good",
+      "type": "python",
+      "request": "launch",
+      "program": "generateMasks4Eval.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb_only_loading",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment_after_rgb/2024-07-02_225106/nerfstudio_models",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/56a0ec536c",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/0560ec536c_5000th_5C_0.3G_0.7D_15TL_10_minKP"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb_only_loading loading model 079a326597 presentation 0",
+      "type": "python",
+      "request": "launch",
+      "program": "generateMasks4Eval.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb_only_loading",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment_after_rgb/2024-07-02_183805/nerfstudio_models",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597_presentation_0"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb_only_loading loading model 079a326597 presentation 1",
+      "type": "python",
+      "request": "launch",
+      "program": "generateMasks4Eval.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb_only_loading",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment_after_rgb/2024-07-02_194138/nerfstudio_models",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597_presentation_1"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb_only_loading loading model 079a326597 GT",
+      "type": "python",
+      "request": "launch",
+      "program": "generateMasks4Eval.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb_only_loading",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment_after_rgb/2024-07-02_084359/nerfstudio_models",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/gt/data_segmentation/079a326597"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment_after_rgb_only_loading loading model 079a326597_smoothed_5000",
+      "type": "python",
+      "request": "launch",
+      "program": "generateMasks4Eval.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment_after_rgb_only_loading",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment_after_rgb/2024-06-30_091025/nerfstudio_models",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597_smoothed_5000"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment no undistortion of masks",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/56a0ec536c",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenesVPNouri/data_segmentation/56a0ec536c",
+        "--undistort_inst_seg_masks=False"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment loading data",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment/2024-06-19_075704/nerfstudio_models",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/56a0ec536c",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenesVPNouri/data_segmentation/56a0ec536c"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment loading data 079a326597",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment/2024-06-28_153952/nerfstudio_models",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/079a326597",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/079a326597"
+      ]
+    },
+    {
+      "name": "Python: VP and Nouri Debug splatfacto_segment loading data 56a0ec536c",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto_segment",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto_segment/2024-06-28_150036/nerfstudio_models_2",
+        "scannetpp-inst-seg-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data/56a0ec536c",
+        "--data_segment=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetppData/DownloadedScenes/data_segmentation/56a0ec536c"
+      ]
+    },    
+    {
+      "name": "Python: VP and Nouri Debug splatfacto loading data",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto",
+        "--load_dir=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/nerfstudio/outputs/unnamed/splatfacto/2024-06-01_181355/nerfstudio_models",
+        "scannetpp-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/56a0ec536c"
+      ]
+    },    
+    {
+      "name": "Python: VP and Nouri Debug splatfacto",
+      "type": "python",
+      "request": "launch",
+      "program": "nerfstudio/scripts/train.py",
+      "console": "integratedTerminal",
+      "args": [
+        "splatfacto",
+        "scannetpp-data",
+        "--data=/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/56a0ec536c",
+      ]
     },
     {
       "name": "Python: NeuS on Replica",

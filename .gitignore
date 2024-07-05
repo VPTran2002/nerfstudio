@@ -165,6 +165,11 @@ cython_debug/
 outputs/
 exports/
 renders/
+Test/
+Test2/
+cached_data/
+cached_data2/
+cached_data_gt/
 # tensorboard log files
 events.out.*
 
@@ -187,4 +192,12 @@ camera_paths/
 ._.DS_Store
 */**/.DS_Store
 */**/._.DS_Store
+means_colors_*
+step-*
+*.png
+*.ply
+*.mp4
+test*
+train*
+
 

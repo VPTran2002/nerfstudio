@@ -23,7 +23,7 @@ from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import cv2
 import torch
-from jaxtyping import Float, Int, Shaped
+from jaxtyping import Float, Int, Shaped # type: ignore
 from torch import Tensor
 from torch.nn import Parameter
 
@@ -208,8 +208,8 @@ class Cameras(TensorDataclass):
                 camera_type
             ), f"camera_type tensor must be of type int, not: {camera_type.dtype}"
             camera_type = camera_type.to(self.device)
-            if camera_type.ndim == 0 or camera_type.shape[-1] != 1:
-                camera_type = camera_type.unsqueeze(-1)
+            if camera_type.ndim == 0 or camera_type.shape[-1] != 1: # type: ignore
+                camera_type = camera_type.unsqueeze(-1) # type: ignore
             # assert torch.all(
             #     camera_type.view(-1)[0] == camera_type
             # ), "Batched cameras of different camera_types will be allowed in the future."
@@ -244,8 +244,8 @@ class Cameras(TensorDataclass):
         elif isinstance(h_w, torch.Tensor):
             assert not torch.is_floating_point(h_w), f"height and width tensor must be of type int, not: {h_w.dtype}"
             h_w = h_w.to(torch.int64).to(self.device)
-            if h_w.ndim == 0 or h_w.shape[-1] != 1:
-                h_w = h_w.unsqueeze(-1)
+            if h_w.ndim == 0 or h_w.shape[-1] != 1: # type: ignore
+                h_w = h_w.unsqueeze(-1) # type: ignore
         # assert torch.all(h_w == h_w.view(-1)[0]), "Batched cameras of different h, w will be allowed in the future."
         elif h_w is None:
             h_w = torch.as_tensor((c_x_y * 2)).to(torch.int64).to(self.device)
@@ -404,7 +404,7 @@ class Cameras(TensorDataclass):
             ), "camera_indices must be a tensor if cameras are batched with more than 1 batch dimension"
             camera_indices = torch.tensor([camera_indices], device=cameras.device)
 
-        assert camera_indices.shape[-1] == len(
+        assert camera_indices.shape[-1] == len( # type: ignore
             cameras.shape
         ), "camera_indices must have shape (num_rays:..., num_cameras_batch_dims)"
 
@@ -412,22 +412,22 @@ class Cameras(TensorDataclass):
         # are all the same height and width and can actually be batched while maintaining the image
         # shape
         if keep_shape is True:
-            assert torch.all(cameras.height[camera_indices] == cameras.height[camera_indices[0]]) and torch.all(
-                cameras.width[camera_indices] == cameras.width[camera_indices[0]]
+            assert torch.all(cameras.height[camera_indices] == cameras.height[camera_indices[0]]) and torch.all( # type: ignore
+                cameras.width[camera_indices] == cameras.width[camera_indices[0]] # type: ignore
             ), "Can only keep shape if all cameras have the same height and width"
 
         # If the cameras don't all have same height / width, if coords is not none, we will need to generate
         # a flat list of coords for each camera and then concatenate otherwise our rays will be jagged.
         # Camera indices, camera_opt, and distortion will also need to be broadcasted accordingly which is non-trivial
         if cameras.is_jagged and coords is None and (keep_shape is None or keep_shape is False):
-            index_dim = camera_indices.shape[-1]
-            camera_indices = camera_indices.reshape(-1, index_dim)
-            _coords = [cameras.get_image_coords(index=tuple(index)).reshape(-1, 2) for index in camera_indices]
+            index_dim = camera_indices.shape[-1] # type: ignore
+            camera_indices = camera_indices.reshape(-1, index_dim) # type: ignore
+            _coords = [cameras.get_image_coords(index=tuple(index)).reshape(-1, 2) for index in camera_indices] # type: ignore
             camera_indices = torch.cat(
-                [index.unsqueeze(0).repeat(coords.shape[0], 1) for index, coords in zip(camera_indices, _coords)],
+                [index.unsqueeze(0).repeat(coords.shape[0], 1) for index, coords in zip(camera_indices, _coords)], # type: ignore
             )
             coords = torch.cat(_coords, dim=0)
-            assert coords.shape[0] == camera_indices.shape[0]
+            assert coords.shape[0] == camera_indices.shape[0] # type: ignore
             # Need to get the coords of each indexed camera and flatten all coordinate maps and concatenate them
 
         # The case where we aren't jagged && keep_shape (since otherwise coords is already set) and coords
@@ -435,24 +435,24 @@ class Cameras(TensorDataclass):
         # each image in camera_indices has to have the same shape since otherwise we would have error'd when
         # we checked keep_shape is valid or we aren't jagged.
         if coords is None:
-            index_dim = camera_indices.shape[-1]
-            index = camera_indices.reshape(-1, index_dim)[0]
+            index_dim = camera_indices.shape[-1] # type: ignore
+            index = camera_indices.reshape(-1, index_dim)[0] # type: ignore
             coords = cameras.get_image_coords(index=tuple(index))  # (h, w, 2)
-            coords = coords.reshape(coords.shape[:2] + (1,) * len(camera_indices.shape[:-1]) + (2,))  # (h, w, 1..., 2)
-            coords = coords.expand(coords.shape[:2] + camera_indices.shape[:-1] + (2,))  # (h, w, num_rays, 2)
+            coords = coords.reshape(coords.shape[:2] + (1,) * len(camera_indices.shape[:-1]) + (2,)) # type: ignore # (h, w, 1..., 2) 
+            coords = coords.expand(coords.shape[:2] + camera_indices.shape[:-1] + (2,)) # type: ignore  # (h, w, num_rays, 2)
             camera_opt_to_camera = (  # (h, w, num_rays, 3, 4) or None
-                camera_opt_to_camera.broadcast_to(coords.shape[:-1] + (3, 4))
+                camera_opt_to_camera.broadcast_to(coords.shape[:-1] + (3, 4)) # type: ignore
                 if camera_opt_to_camera is not None
                 else None
             )
             distortion_params_delta = (  # (h, w, num_rays, 6) or None
-                distortion_params_delta.broadcast_to(coords.shape[:-1] + (6,))
+                distortion_params_delta.broadcast_to(coords.shape[:-1] + (6,)) # type: ignore
                 if distortion_params_delta is not None
                 else None
             )
 
         # If camera indices was an int or coords was none, we need to broadcast our indices along batch dims
-        camera_indices = camera_indices.broadcast_to(coords.shape[:-1] + (len(cameras.shape),)).to(torch.long)
+        camera_indices = camera_indices.broadcast_to(coords.shape[:-1] + (len(cameras.shape),)).to(torch.long) # type: ignore
 
         # Checking our tensors have been standardized
         assert isinstance(coords, torch.Tensor) and isinstance(camera_indices, torch.Tensor)

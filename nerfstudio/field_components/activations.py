@@ -19,7 +19,7 @@ Special activation functions.
 from typing import TYPE_CHECKING
 
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor
 from torch.autograd import Function
 from torch.cuda.amp import custom_bwd, custom_fwd

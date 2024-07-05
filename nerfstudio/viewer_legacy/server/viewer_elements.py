@@ -451,7 +451,7 @@ class ViewerDropdown(ViewerParameter[TString], Generic[TString]):
             self.default_value,  # type: ignore
             hint=self.hint,
         )
-        self.gui_handle.set_disabled(self.disabled)
+        self.gui_handle.set_disabled(self.disabled) # type: ignore
 
     def set_options(self, new_options: List[TString]) -> None:
         """

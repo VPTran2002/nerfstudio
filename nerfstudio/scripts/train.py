@@ -180,7 +180,7 @@ def launch(
         device_type: type of device to use for training.
     """
     assert config is not None
-    world_size = num_machines * num_devices_per_machine
+    world_size = num_machines * num_devices_per_machine #number of available gpus
     if world_size == 0:
         raise ValueError("world_size cannot be 0")
     elif world_size == 1:

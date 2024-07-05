@@ -111,29 +111,29 @@ class Trainer:
     callbacks: List[TrainingCallback]
 
     def __init__(self, config: TrainerConfig, local_rank: int = 0, world_size: int = 1) -> None:
-        self.train_lock = Lock()
-        self.config = config
-        self.local_rank = local_rank
-        self.world_size = world_size
-        self.device: TORCH_DEVICE = config.machine.device_type
+        self.train_lock = Lock() #Lock for threads
+        self.config = config #Training configuration for splatfacto model
+        self.local_rank = local_rank #This is 0 (since we use only one process)
+        self.world_size = world_size #1 since we only use 1 gpu
+        self.device: TORCH_DEVICE = config.machine.device_type #cuda
         if self.device == "cuda":
-            self.device += f":{local_rank}"
-        self.mixed_precision: bool = self.config.mixed_precision
-        self.use_grad_scaler: bool = self.mixed_precision or self.config.use_grad_scaler
-        self.training_state: Literal["training", "paused", "completed"] = "training"
+            self.device += f":{local_rank}" #every process uses exactly one gpu
+        self.mixed_precision: bool = self.config.mixed_precision #False: Do not train with mixed precision
+        self.use_grad_scaler: bool = self.mixed_precision or self.config.use_grad_scaler #We do not train using a grad_scaler since we did not specify this explicitely and do not train with mixed precision
+        self.training_state: Literal["training", "paused", "completed"] = "training" #The trainer is initialized to be in training state first
         self.gradient_accumulation_steps: DefaultDict = defaultdict(lambda: 1)
-        self.gradient_accumulation_steps.update(self.config.gradient_accumulation_steps)
+        self.gradient_accumulation_steps.update(self.config.gradient_accumulation_steps) #if we try to access a key of gradient_accumulation_step, we get 1 (default) back as we do not use gradient accumulation
 
         if self.device == "cpu":
             self.mixed_precision = False
             CONSOLE.print("Mixed precision is disabled for CPU training.")
         self._start_step: int = 0
         # optimizers
-        self.grad_scaler = GradScaler(enabled=self.use_grad_scaler)
+        self.grad_scaler = GradScaler(enabled=self.use_grad_scaler) #The grad scaler acts like an identity function since use_grad_scaler is deactivated
 
-        self.base_dir: Path = config.get_base_dir()
+        self.base_dir: Path = config.get_base_dir() #here, checkpoints, config files and everything else is stored
         # directory to save checkpoints
-        self.checkpoint_dir: Path = config.get_checkpoint_dir()
+        self.checkpoint_dir: Path = config.get_checkpoint_dir() #here the model is saved. It is a subdirectory of base_dir
         CONSOLE.log(f"Saving checkpoints to: {self.checkpoint_dir}")
 
         self.viewer_state = None
@@ -150,19 +150,19 @@ class Trainer:
                 'test': loads train/test datasets into memory
                 'inference': does not load any dataset into memory
         """
-        self.pipeline = self.config.pipeline.setup(
-            device=self.device,
-            test_mode=test_mode,
-            world_size=self.world_size,
-            local_rank=self.local_rank,
-            grad_scaler=self.grad_scaler,
+        self.pipeline = self.config.pipeline.setup( #The pipeline is setup. Here dataloading and the model come together. Later, for example, one only has to call self.pipeline.training_step to load data, put it through model
+            device=self.device, #cuda:0
+            test_mode=test_mode, #'val'
+            world_size=self.world_size,#1
+            local_rank=self.local_rank,#0
+            grad_scaler=self.grad_scaler,#identity
         )
-        self.optimizers = self.setup_optimizers()
+        self.optimizers = self.setup_optimizers() #Here the optimizers for every param group are set up
 
         # set up viewer if enabled
-        viewer_log_path = self.base_dir / self.config.viewer.relative_log_filename
-        self.viewer_state, banner_messages = None, None
-        if self.config.is_viewer_legacy_enabled() and self.local_rank == 0:
+        viewer_log_path = self.base_dir / self.config.viewer.relative_log_filename #Where is the log file for the viewer? 'outputs/unnamed/splatfacto_segment/2024-05-20_104454/viewer_log_filename.txt'
+        self.viewer_state, banner_messages = None, None #None, None
+        if self.config.is_viewer_legacy_enabled() and self.local_rank == 0: #This is disabled
             datapath = self.config.data
             if datapath is None:
                 datapath = self.base_dir
@@ -176,24 +176,24 @@ class Trainer:
             )
             banner_messages = [f"Legacy viewer at: {self.viewer_state.viewer_url}"]
         if self.config.is_viewer_enabled() and self.local_rank == 0:
-            datapath = self.config.data
+            datapath = self.config.data #None
             if datapath is None:
-                datapath = self.base_dir
+                datapath = self.base_dir # 'outputs/unnamed/splatfacto_segment/2024-05-20_104454'
             self.viewer_state = ViewerState(
-                self.config.viewer,
-                log_filename=viewer_log_path,
-                datapath=datapath,
-                pipeline=self.pipeline,
-                trainer=self,
-                train_lock=self.train_lock,
-                share=self.config.viewer.make_share_url,
+                self.config.viewer, #ViewerConfig
+                log_filename=viewer_log_path, # 'outputs/unnamed/splatfacto_segment/2024-05-20_104454/viewer_log_filename.txt'
+                datapath=datapath, # 'outputs/unnamed/splatfacto_segment/2024-05-20_104454'
+                pipeline=self.pipeline, #splatfacto_segment pipeline
+                trainer=self, #this instance
+                train_lock=self.train_lock, #The train lock
+                share=self.config.viewer.make_share_url, # False
             )
             banner_messages = self.viewer_state.viewer_info
         self._check_viewer_warnings()
 
         self._load_checkpoint()
 
-        self.callbacks = self.pipeline.get_training_callbacks(
+        self.callbacks = self.pipeline.get_training_callbacks( # [step_cb,after_train,refinement_after]
             TrainingCallbackAttributes(
                 optimizers=self.optimizers, grad_scaler=self.grad_scaler, pipeline=self.pipeline, trainer=self
             )
@@ -221,24 +221,27 @@ class Trainer:
         Returns:
             The optimizers object given the trainer config.
         """
-        optimizer_config = self.config.optimizers.copy()
-        param_groups = self.pipeline.get_param_groups()
+        #What are parameter groups? All parameter of the model are grouped resulting in parameter groups. For example, the parameter groups
+        #of splatfacto are means (50000,3), features_dc (50000,3), features_rest (50000, 15, 3), opacities (50000, 1), scales (50000, 3), quats (50000, 4).
+        #Note that scales and quats form the covariance matrix
+        optimizer_config = self.config.optimizers.copy() #Here, it is configured which optimizer is used for which parameter group
+        param_groups = self.pipeline.get_param_groups() #Here, we get everything apart from camera_opt
         return Optimizers(optimizer_config, param_groups)
 
     def train(self) -> None:
         """Train the model."""
         assert self.pipeline.datamanager.train_dataset is not None, "Missing DatsetInputs"
 
-        self.pipeline.datamanager.train_dataparser_outputs.save_dataparser_transform(
+        self.pipeline.datamanager.train_dataparser_outputs.save_dataparser_transform( #not so important
             self.base_dir / "dataparser_transforms.json"
         )
 
         self._init_viewer_state()
         with TimeWriter(writer, EventName.TOTAL_TRAIN_TIME):
-            num_iterations = self.config.max_num_iterations
+            num_iterations = self.config.max_num_iterations #30000
             step = 0
             self.stop_training = False
-            for step in range(self._start_step, self._start_step + num_iterations):
+            for step in range(self._start_step, self._start_step + num_iterations): #train for 30000 iterations
                 self.step = step
                 if self.stop_training:
                     break
@@ -247,18 +250,18 @@ class Trainer:
                         self._after_train()
                         return
                     time.sleep(0.01)
-                with self.train_lock:
+                with self.train_lock: #Not relevant since we do not do multiprocessing
                     with TimeWriter(writer, EventName.ITER_TRAIN_TIME, step=step) as train_t:
-                        self.pipeline.train()
+                        self.pipeline.train() #set pipeline into training mode
 
                         # training callbacks before the training iteration
-                        for callback in self.callbacks:
+                        for callback in self.callbacks: #run all callbacks which are supposed to be runned before training iteration
                             callback.run_callback_at_location(
                                 step, location=TrainingCallbackLocation.BEFORE_TRAIN_ITERATION
                             )
 
                         # time the forward pass
-                        loss, loss_dict, metrics_dict = self.train_iteration(step)
+                        loss, loss_dict, metrics_dict = self.train_iteration(step) #do one training iteration
 
                         # training callbacks after the training iteration
                         for callback in self.callbacks:
@@ -277,7 +280,7 @@ class Trainer:
                         avg_over_steps=True,
                     )
 
-                self._update_viewer_state(step)
+                self._update_viewer_state(step) #renders scene using pipeline and measures how long rendering takes
 
                 # a batch of train rays
                 if step_check(step, self.config.logging.steps_per_log, run_at_zero=True):
@@ -487,23 +490,23 @@ class Trainer:
 
         needs_zero = [
             group for group in self.optimizers.parameters.keys() if step % self.gradient_accumulation_steps[group] == 0
-        ]
-        self.optimizers.zero_grad_some(needs_zero)
-        cpu_or_cuda_str: str = self.device.split(":")[0]
-        cpu_or_cuda_str = "cpu" if cpu_or_cuda_str == "mps" else cpu_or_cuda_str
+        ] #For which groups do we needto call zero_grad?
+        self.optimizers.zero_grad_some(needs_zero) #do zero grad for all groups which need it
+        cpu_or_cuda_str: str = self.device.split(":")[0] #cuda
+        cpu_or_cuda_str = "cpu" if cpu_or_cuda_str == "mps" else cpu_or_cuda_str #cuda
 
-        with torch.autocast(device_type=cpu_or_cuda_str, enabled=self.mixed_precision):
-            _, loss_dict, metrics_dict = self.pipeline.get_train_loss_dict(step=step)
+        with torch.autocast(device_type=cpu_or_cuda_str, enabled=self.mixed_precision): #get training loss of current iteration
+            _, loss_dict, metrics_dict = self.pipeline.get_train_loss_dict(step=step) 
             loss = functools.reduce(torch.add, loss_dict.values())
         self.grad_scaler.scale(loss).backward()  # type: ignore
-        needs_step = [
+        needs_step = [ #which parameter groups require optimization step now?
             group
             for group in self.optimizers.parameters.keys()
             if step % self.gradient_accumulation_steps[group] == self.gradient_accumulation_steps[group] - 1
         ]
-        self.optimizers.optimizer_scaler_step_some(self.grad_scaler, needs_step)
+        self.optimizers.optimizer_scaler_step_some(self.grad_scaler, needs_step) #Do an optimization step for those which require...
 
-        if self.config.log_gradients:
+        if self.config.log_gradients: #We do not step in here
             total_grad = 0
             for tag, value in self.pipeline.model.named_parameters():
                 assert tag != "Total"
@@ -518,7 +521,7 @@ class Trainer:
         self.grad_scaler.update()
         # If the gradient scaler is decreased, no optimization step is performed so we should not step the scheduler.
         if scale <= self.grad_scaler.get_scale():
-            self.optimizers.scheduler_step_all(step)
+            self.optimizers.scheduler_step_all(step) #schedule learning rate
 
         # Merging loss and metrics dict into a single output.
         return loss, loss_dict, metrics_dict  # type: ignore

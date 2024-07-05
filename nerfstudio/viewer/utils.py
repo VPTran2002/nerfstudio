@@ -20,7 +20,7 @@ from typing import Any, List, Literal, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import nn
 
 from nerfstudio.cameras.cameras import Cameras, CameraType

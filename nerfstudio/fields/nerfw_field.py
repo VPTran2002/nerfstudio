@@ -17,7 +17,7 @@
 from typing import Dict, Optional, Tuple
 
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor, nn
 
 from nerfstudio.cameras.rays import RaySamples

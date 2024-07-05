@@ -25,7 +25,7 @@ from time import time
 from typing import Any, Dict, List, Optional, Union
 
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor
 from torch.utils.tensorboard import SummaryWriter
 

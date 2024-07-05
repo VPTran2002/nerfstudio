@@ -84,33 +84,48 @@ class Viewer:
         share: bool = False,
     ):
         self.ready = False  # Set to True at end of constructor.
+        """The config for splatfacto-segment
+        special variables
+        camera_frustum_scale: 0.1
+        default_composite_depth: True
+        image_format: 'jpeg'
+        jpeg_quality: 75
+        make_share_url: False
+        max_num_display_images: 512
+        num_rays_per_chunk: 32768
+        quit_on_train_completion: False
+        relative_log_filename: 'viewer_log_filename.txt'
+        websocket_host: '0.0.0.0'
+        websocket_port: None
+        websocket_port_default: 7007
+        """
         self.config = config
-        self.trainer = trainer
-        self.last_step = 0
-        self.train_lock = train_lock
-        self.pipeline = pipeline
-        self.log_filename = log_filename
-        self.datapath = datapath.parent if datapath.is_file() else datapath
-        self.include_time = self.pipeline.datamanager.includes_time
+        self.trainer = trainer #The trainer which set up the viewer
+        self.last_step = 0 #0
+        self.train_lock = train_lock #Train lock defined in trainer
+        self.pipeline = pipeline #The splatfacto-pipeline
+        self.log_filename = log_filename # 'outputs/unnamed/splatfacto_segment/2024-05-20_105427/viewer_log_filename.txt'
+        self.datapath = datapath.parent if datapath.is_file() else datapath # 'outputs/unnamed/splatfacto_segment/2024-05-20_105427'
+        self.include_time = self.pipeline.datamanager.includes_time # False
 
-        if self.config.websocket_port is None:
-            websocket_port = viewer_utils.get_free_port(default_port=self.config.websocket_port_default)
+        if self.config.websocket_port is None: #Get websocket port on which the viewer runs
+            websocket_port = viewer_utils.get_free_port(default_port=self.config.websocket_port_default) 
         else:
             websocket_port = self.config.websocket_port
         self.log_filename.parent.mkdir(exist_ok=True)
 
         # viewer specific variables
-        self.output_type_changed = True
-        self.output_split_type_changed = True
-        self.step = 0
-        self.train_btn_state: Literal["training", "paused", "completed"] = "training"
-        self._prev_train_state: Literal["training", "paused", "completed"] = "training"
-        self.last_move_time = 0
+        self.output_type_changed = True #True
+        self.output_split_type_changed = True #True
+        self.step = 0 #0
+        self.train_btn_state: Literal["training", "paused", "completed"] = "training" #training
+        self._prev_train_state: Literal["training", "paused", "completed"] = "training" #training
+        self.last_move_time = 0 #0
 
-        self.viser_server = viser.ViserServer(host=config.websocket_host, port=websocket_port)
+        self.viser_server = viser.ViserServer(host=config.websocket_host, port=websocket_port) #run server on localhost:7007
         # Set the name of the URL either to the share link if available, or the localhost
         share_url = None
-        if share:
+        if share: #We do not go in here
             share_url = self.viser_server.request_share_url()
             if share_url is None:
                 print("Couldn't make share URL!")
@@ -122,35 +137,35 @@ class Viewer:
             # we'll just print localhost instead. There are some security
             # (and IPv6 compatibility) implications here though, so we should
             # note that the server is bound to 0.0.0.0!
-            self.viewer_info = [f"Viewer running locally at: http://localhost:{websocket_port} (listening on 0.0.0.0)"]
+            self.viewer_info = [f"Viewer running locally at: http://localhost:{websocket_port} (listening on 0.0.0.0)"] #Now print where the viewer is running
         else:
             self.viewer_info = [f"Viewer running locally at: http://{config.websocket_host}:{websocket_port}"]
 
-        buttons = (
-            viser.theme.TitlebarButton(
+        buttons = ( 
+            viser.theme.TitlebarButton( #A "Getting Started" button within the titlebar of the viewer. Leads to "https://nerf.studio"
                 text="Getting Started",
                 icon=None,
                 href="https://nerf.studio",
             ),
-            viser.theme.TitlebarButton(
+            viser.theme.TitlebarButton( #A "Github" button within the titlebar of the viewer. Leads to "https://github.com/nerfstudio-project/nerfstudio"
                 text="Github",
                 icon="GitHub",
                 href="https://github.com/nerfstudio-project/nerfstudio",
             ),
-            viser.theme.TitlebarButton(
+            viser.theme.TitlebarButton( #A "Documentation" button within the titlebar of the viewer. Leads to "https://docs.nerf.studio"
                 text="Documentation",
                 icon="Description",
                 href="https://docs.nerf.studio",
             ),
         )
-        image = viser.theme.TitlebarImage(
+        image = viser.theme.TitlebarImage( #Nerfstuidio image with link to "https://docs.nerf.studio/"
             image_url_light="https://docs.nerf.studio/_static/imgs/logo.png",
             image_url_dark="https://docs.nerf.studio/_static/imgs/logo-dark.png",
             image_alt="NerfStudio Logo",
             href="https://docs.nerf.studio/",
         )
-        titlebar_theme = viser.theme.TitlebarConfig(buttons=buttons, image=image)
-        self.viser_server.configure_theme(
+        titlebar_theme = viser.theme.TitlebarConfig(buttons=buttons, image=image) #set up titlebar
+        self.viser_server.configure_theme( #make titlebar visible
             titlebar_content=titlebar_theme,
             control_layout="collapsible",
             dark_mode=True,
@@ -165,7 +180,7 @@ class Viewer:
         self.pause_train = self.viser_server.add_gui_button(
             label="Pause Training", disabled=False, icon=viser.Icon.PLAYER_PAUSE_FILLED
         )
-        self.pause_train.on_click(lambda _: self.toggle_pause_button())
+        self.pause_train.on_click(lambda _: self.toggle_pause_button()) #The pause button
         self.pause_train.on_click(lambda han: self._toggle_training_state(han))
         self.resume_train = self.viser_server.add_gui_button(
             label="Resume Training", disabled=False, icon=viser.Icon.PLAYER_PLAY_FILLED
@@ -185,12 +200,12 @@ class Viewer:
         self.show_images.on_click(lambda _: self.set_camera_visibility(True))
         self.show_images.on_click(lambda _: self.toggle_cameravis_button())
         self.show_images.visible = False
-        mkdown = self.make_stats_markdown(0, "0x0px")
-        self.stats_markdown = self.viser_server.add_gui_markdown(mkdown)
+        mkdown = self.make_stats_markdown(0, "0x0px") # Step: ...  \nResolution: ...
+        self.stats_markdown = self.viser_server.add_gui_markdown(mkdown) #make mkdown visible in gui
         tabs = self.viser_server.add_gui_tab_group()
         control_tab = tabs.add_tab("Control", viser.Icon.SETTINGS)
         with control_tab:
-            self.control_panel = ControlPanel(
+            self.control_panel = ControlPanel( #The control panel with which one can determine train speed, max res, output_type etc.
                 self.viser_server,
                 self.include_time,
                 VISER_NERFSTUDIO_SCALE_RATIO,
@@ -200,7 +215,7 @@ class Viewer:
                 default_composite_depth=self.config.default_composite_depth,
             )
         config_path = self.log_filename.parents[0] / "config.yml"
-        with tabs.add_tab("Render", viser.Icon.CAMERA):
+        with tabs.add_tab("Render", viser.Icon.CAMERA): #This is the Render tab
             self.render_tab_state = populate_render_tab(
                 self.viser_server, config_path, self.datapath, self.control_panel
             )
@@ -249,7 +264,7 @@ class Viewer:
         with control_tab:
             from nerfstudio.viewer_legacy.server.viewer_elements import ViewerElement as LegacyViewerElement
 
-            if len(parse_object(pipeline, LegacyViewerElement, "Custom Elements")) > 0:
+            if len(parse_object(pipeline, LegacyViewerElement, "Custom Elements")) > 0: #we don't go in here
                 from nerfstudio.utils.rich_utils import CONSOLE
 
                 CONSOLE.print(
@@ -257,21 +272,21 @@ class Viewer:
                     style="bold yellow",
                 )
             self.viewer_elements = []
-            self.viewer_elements.extend(parse_object(pipeline, ViewerElement, "Custom Elements"))
-            for param_path, element in self.viewer_elements:
+            self.viewer_elements.extend(parse_object(pipeline, ViewerElement, "Custom Elements")) #[]
+            for param_path, element in self.viewer_elements: #we do not go in here
                 folder_labels = param_path.split("/")[:-1]
                 nested_folder_install(folder_labels, [], element)
 
             # scrape the trainer/pipeline for any ViewerControl objects to initialize them
             self.viewer_controls: List[ViewerControl] = [
                 e for (_, e) in parse_object(pipeline, ViewerControl, "Custom Elements")
-            ]
+            ] # []
         for c in self.viewer_controls:
             c._setup(self)
 
         # Diagnostics for Gaussian Splatting: where the points are at the start of training.
         # This is hidden by default, it can be shown from the Viser UI's scene tree table.
-        if isinstance(pipeline.model, SplatfactoModel):
+        if isinstance(pipeline.model, SplatfactoModel): #we do not go in here
             self.viser_server.add_point_cloud(
                 "/gaussian_splatting_initial_points",
                 points=pipeline.model.means.numpy(force=True) * VISER_NERFSTUDIO_SCALE_RATIO,
@@ -280,8 +295,7 @@ class Viewer:
                 point_shape="circle",
                 visible=False,  # Hidden by default.
             )
-        self.ready = True
-
+        self.ready = True #Now viewer is ready
     def toggle_pause_button(self) -> None:
         self.pause_train.visible = not self.pause_train.visible
         self.resume_train.visible = not self.resume_train.visible
@@ -335,11 +349,11 @@ class Viewer:
             )
         return camera_state
 
-    def handle_disconnect(self, client: viser.ClientHandle) -> None:
+    def handle_disconnect(self, client: viser.ClientHandle) -> None: #if client looses connection, this method is called
         self.render_statemachines[client.client_id].running = False
         self.render_statemachines.pop(client.client_id)
 
-    def handle_new_client(self, client: viser.ClientHandle) -> None:
+    def handle_new_client(self, client: viser.ClientHandle) -> None: #if client establishes connection, do this first
         self.render_statemachines[client.client_id] = RenderStateMachine(self, VISER_NERFSTUDIO_SCALE_RATIO, client)
         self.render_statemachines[client.client_id].start()
 

@@ -45,6 +45,11 @@ from nerfstudio.models.base_model import Model, ModelConfig
 from nerfstudio.utils.colors import get_color
 from nerfstudio.utils.rich_utils import CONSOLE
 
+def boolean_to_float32(tensor):
+    if tensor.dtype == torch.bool:
+        return tensor.float()
+    else:
+        return tensor
 
 def random_quat_tensor(N):
     """
@@ -673,10 +678,10 @@ class SplatfactoModel(Model):
 
         # get the background color
         if self.training:
-            optimized_camera_to_world = self.camera_optimizer.apply_to_camera(camera)[0, ...]
+            optimized_camera_to_world = self.camera_optimizer.apply_to_camera(camera)[0, ...] #Optimizes camera extrisics! Very important
 
             if self.config.background_color == "random":
-                background = torch.rand(3, device=self.device)
+                background = torch.rand(3, device=self.device) #we use random background color
             elif self.config.background_color == "white":
                 background = torch.ones(3, device=self.device)
             elif self.config.background_color == "black":
@@ -718,7 +723,7 @@ class SplatfactoModel(Model):
         W, H = int(camera.width.item()), int(camera.height.item())
         self.last_size = (H, W)
 
-        if crop_ids is not None:
+        if crop_ids is not None: #We don't go here
             opacities_crop = self.opacities[crop_ids]
             means_crop = self.means[crop_ids]
             features_dc_crop = self.features_dc[crop_ids]
@@ -735,7 +740,7 @@ class SplatfactoModel(Model):
 
         colors_crop = torch.cat((features_dc_crop[:, None, :], features_rest_crop), dim=1)
         BLOCK_WIDTH = 16  # this controls the tile size of rasterization, 16 is a good default
-        self.xys, depths, self.radii, conics, comp, num_tiles_hit, cov3d = project_gaussians(  # type: ignore
+        self.xys, depths, self.radii, conics, comp, num_tiles_hit, cov3d = project_gaussians(  # type: ignore #project the gaussians onto the 2D screen
             means_crop,
             torch.exp(scales_crop),
             1,
@@ -865,7 +870,7 @@ class SplatfactoModel(Model):
         # This is a little bit sketchy for the SSIM loss.
         if "mask" in batch:
             # batch["mask"] : [H, W, 1]
-            mask = self._downscale_if_required(batch["mask"])
+            mask = self._downscale_if_required(boolean_to_float32(batch["mask"]))
             mask = mask.to(self.device)
             assert mask.shape[:2] == gt_img.shape[:2] == pred_img.shape[:2]
             gt_img = gt_img * mask

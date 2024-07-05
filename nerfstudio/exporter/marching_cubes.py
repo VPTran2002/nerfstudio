@@ -22,7 +22,7 @@ from typing import Callable, List, Optional, Tuple, Union
 import numpy as np
 import torch
 import trimesh
-from jaxtyping import Bool, Float
+from jaxtyping import Bool, Float # type: ignore
 from skimage import measure
 from torch import Tensor
 

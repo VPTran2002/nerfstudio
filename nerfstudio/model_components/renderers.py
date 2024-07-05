@@ -32,7 +32,7 @@ from typing import Generator, Literal, Optional, Tuple, Union
 
 import nerfacc
 import torch
-from jaxtyping import Float, Int
+from jaxtyping import Float, Int # type: ignore
 from torch import Tensor, nn
 
 from nerfstudio.cameras.rays import RaySamples

@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from typing import Literal, Tuple
 
 import torch
-from jaxtyping import Bool, Float
+from jaxtyping import Bool, Float # type: ignore
 from torch import Tensor
 
 from nerfstudio.data.scene_box import OrientedBox

@@ -15,7 +15,7 @@
 """Shaders for rendering."""
 from typing import Optional
 
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor, nn
 
 

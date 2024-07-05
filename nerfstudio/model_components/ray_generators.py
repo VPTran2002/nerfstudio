@@ -15,7 +15,7 @@
 """
 Ray generator.
 """
-from jaxtyping import Int
+from jaxtyping import Int # type: ignore
 from torch import Tensor, nn
 
 from nerfstudio.cameras.cameras import Cameras

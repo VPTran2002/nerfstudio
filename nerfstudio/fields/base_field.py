@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Optional, Tuple, Type
 
 import torch
-from jaxtyping import Float, Shaped
+from jaxtyping import Float, Shaped # type: ignore
 from torch import Tensor, nn
 
 from nerfstudio.cameras.rays import Frustums, RaySamples

@@ -18,7 +18,7 @@ Code for embeddings.
 
 
 import torch
-from jaxtyping import Shaped
+from jaxtyping import Shaped # type: ignore
 from torch import Tensor
 
 from nerfstudio.field_components.base_field_component import FieldComponent

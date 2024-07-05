@@ -631,7 +631,7 @@ def create_sfm_depth(
             overlay = overlay.reshape([H, W, 3])
             input_image_path = input_images_dir / im_data.name
             input_image = cv2.imread(str(input_image_path))  # type: ignore
-            debug = 0.3 * input_image + 0.7 + overlay
+            debug = 0.3 * input_image + 0.7 + overlay # type: ignore
 
             out_name = out_name + ".debug.jpg"
             output_path = output_dir / "debug_depth" / out_name

@@ -19,7 +19,7 @@ from enum import Enum
 from typing import Callable, Optional, Union
 
 import torch
-from jaxtyping import Float, Shaped
+from jaxtyping import Float, Shaped # type: ignore
 from torch import Tensor, nn
 
 from nerfstudio.field_components.base_field_component import FieldComponent

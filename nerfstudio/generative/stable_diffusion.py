@@ -24,7 +24,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import tyro
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor, nn
 from torch.cuda.amp.grad_scaler import GradScaler
 

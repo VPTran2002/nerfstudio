@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Dict, Literal, Optional, Tuple, Union, overload
 
 import torch
-from jaxtyping import Float, Int, Shaped
+from jaxtyping import Float, Int, Shaped # type: ignore
 from torch import Tensor
 
 from nerfstudio.utils.math import Gaussians, conical_frustum_to_gaussian

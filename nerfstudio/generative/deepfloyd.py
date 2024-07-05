@@ -20,7 +20,7 @@ from typing import List, Optional, Union
 import torch
 import torch.nn.functional as F
 import tyro
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from PIL import Image
 from torch import Generator, Tensor, nn
 from torch.cuda.amp.grad_scaler import GradScaler

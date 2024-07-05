@@ -25,8 +25,8 @@ from typing import Literal, Optional, Type, Union
 import numpy
 import torch
 import tyro
-from jaxtyping import Float, Int
-from torch import Tensor, nn
+from jaxtyping import Float, Int # type: ignore
+from torch import Tensor, nn 
 from typing_extensions import assert_never
 
 from nerfstudio.cameras.cameras import Cameras

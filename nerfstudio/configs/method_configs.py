@@ -28,12 +28,14 @@ from nerfstudio.configs.base_config import ViewerConfig
 from nerfstudio.configs.external_methods import ExternalMethodDummyTrainerConfig, get_external_methods
 from nerfstudio.data.datamanagers.base_datamanager import VanillaDataManager, VanillaDataManagerConfig
 from nerfstudio.data.datamanagers.full_images_datamanager import FullImageDatamanagerConfig
+from nerfstudio.data.datamanagers.full_images_inst_segm_datamanager import FullImageInstanceSegmentationDatamanagerConfig
 from nerfstudio.data.datamanagers.parallel_datamanager import ParallelDataManagerConfig
 from nerfstudio.data.datamanagers.random_cameras_datamanager import RandomCamerasDataManagerConfig
 from nerfstudio.data.dataparsers.blender_dataparser import BlenderDataParserConfig
 from nerfstudio.data.dataparsers.dnerf_dataparser import DNeRFDataParserConfig
 from nerfstudio.data.dataparsers.instant_ngp_dataparser import InstantNGPDataParserConfig
 from nerfstudio.data.dataparsers.nerfstudio_dataparser import NerfstudioDataParserConfig
+from nerfstudio.data.dataparsers.scannetpp_segment_dataparser import ScanNetppSegmentDataParserConfig
 from nerfstudio.data.dataparsers.phototourism_dataparser import PhototourismDataParserConfig
 from nerfstudio.data.dataparsers.sdfstudio_dataparser import SDFStudioDataParserConfig
 from nerfstudio.data.dataparsers.sitcoms3d_dataparser import Sitcoms3DDataParserConfig
@@ -47,7 +49,11 @@ from nerfstudio.engine.schedulers import (
     ExponentialDecaySchedulerConfig,
     MultiStepSchedulerConfig,
 )
-from nerfstudio.engine.trainer import TrainerConfig
+from nerfstudio.engine.trainer import Trainer, TrainerConfig
+from nerfstudio.engine.trainer_segment import TrainerSegment, TrainerSegmentConfig
+from nerfstudio.engine.trainer_segment_after_rgb import TrainerSegmentAfterRGB, TrainerSegmentAfterRGBConfig
+
+
 from nerfstudio.field_components.temporal_distortions import TemporalDistortionKind
 from nerfstudio.fields.sdf_field import SDFFieldConfig
 from nerfstudio.models.depth_nerfacto import DepthNerfactoModelConfig
@@ -59,13 +65,19 @@ from nerfstudio.models.neus import NeuSModelConfig
 from nerfstudio.models.neus_facto import NeuSFactoModelConfig
 from nerfstudio.models.semantic_nerfw import SemanticNerfWModelConfig
 from nerfstudio.models.splatfacto import SplatfactoModelConfig
+from nerfstudio.models.splat_facto_segment import SplatfactoSegmentModelConfig
+from nerfstudio.models.splat_facto_segment_after_rgb import SplatfactoSegmentAfterRGBConfig
+from nerfstudio.engine.LoaderForEvaluation import TrainerSegmentAfterRGBOnlyLoadConfig
+
 from nerfstudio.models.tensorf import TensoRFModelConfig
 from nerfstudio.models.vanilla_nerf import NeRFModel, VanillaModelConfig
-from nerfstudio.pipelines.base_pipeline import VanillaPipelineConfig
+from nerfstudio.pipelines.base_pipeline import VanillaPipelineConfig, VanillaPipelineSegmentConfig
 from nerfstudio.pipelines.dynamic_batch import DynamicBatchPipelineConfig
 from nerfstudio.plugins.registry import discover_methods
+from dataclasses import field
 
-method_configs: Dict[str, Union[TrainerConfig, ExternalMethodDummyTrainerConfig]] = {}
+
+method_configs: Dict[str, Union[TrainerConfig, TrainerSegmentConfig,TrainerSegmentAfterRGBConfig, TrainerSegmentAfterRGBOnlyLoadConfig, ExternalMethodDummyTrainerConfig]] = {}
 descriptions = {
     "nerfacto": "Recommended real-time model tuned for real captures. This model will be continually updated.",
     "depth-nerfacto": "Nerfacto with depth supervision.",
@@ -81,6 +93,9 @@ descriptions = {
     "neus": "Implementation of NeuS. (slow)",
     "neus-facto": "Implementation of NeuS-Facto. (slow)",
     "splatfacto": "Gaussian Splatting model",
+    "splatfacto_segment": "Gaussian Splatting model with instance segmentation destillation",
+    "splatfacto_segment_after_rgb": "Gaussian Splatting model with instance segmentation destillation after RGB",
+    "splatfacto_segment_after_rgb_only_loading": "Only loading of Gaussian Splatting model with instance segmentation destillation after RGB"
 }
 
 method_configs["nerfacto"] = TrainerConfig(
@@ -597,7 +612,7 @@ method_configs["splatfacto"] = TrainerConfig(
     steps_per_eval_batch=0,
     steps_per_save=2000,
     steps_per_eval_all_images=1000,
-    max_num_iterations=30000,
+    max_num_iterations=33000,
     mixed_precision=False,
     pipeline=VanillaPipelineConfig(
         datamanager=FullImageDatamanagerConfig(
@@ -622,6 +637,187 @@ method_configs["splatfacto"] = TrainerConfig(
             "optimizer": AdamOptimizerConfig(lr=0.0025 / 20, eps=1e-15),
             "scheduler": None,
         },
+        "opacities": {
+            "optimizer": AdamOptimizerConfig(lr=0.05, eps=1e-15),
+            "scheduler": None,
+        },
+        "scales": {
+            "optimizer": AdamOptimizerConfig(lr=0.005, eps=1e-15),
+            "scheduler": None,
+        },
+        "quats": {"optimizer": AdamOptimizerConfig(lr=0.001, eps=1e-15), "scheduler": None},
+        "camera_opt": {
+            "optimizer": AdamOptimizerConfig(lr=1e-4, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(
+                lr_final=5e-7, max_steps=30000, warmup_steps=1000, lr_pre_warmup=0
+            ),
+        },
+    },
+    viewer=ViewerConfig(num_rays_per_chunk=1 << 15),
+    vis="viewer",
+)
+
+
+method_configs["splatfacto_segment"] = TrainerSegmentConfig(
+    method_name="splatfacto_segment",
+    steps_per_eval_image=100,
+    steps_per_eval_batch=0,
+    steps_per_save=500,
+    steps_per_eval_all_images=1000,
+    max_num_iterations=30000,
+    mixed_precision=False,
+    pipeline=
+    VanillaPipelineSegmentConfig(
+        datamanager=FullImageInstanceSegmentationDatamanagerConfig(
+            dataparser=ScanNetppSegmentDataParserConfig(),
+            cache_images_type="uint8",
+        ),
+        model=SplatfactoSegmentModelConfig(),
+    ),
+    optimizers={
+        "means": {
+            "optimizer": AdamOptimizerConfig(lr=1.6e-4, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(
+                lr_final=1.6e-6,
+                max_steps=30000,
+            ),
+        },
+        "features_dc": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },
+        "features_rest": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025 / 20, eps=1e-15),
+            "scheduler": None,
+        },
+        "features_segmentation_small": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },
+        "upproj": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },                
+        "opacities": {
+            "optimizer": AdamOptimizerConfig(lr=0.05, eps=1e-15),
+            "scheduler": None,
+        },
+        "scales": {
+            "optimizer": AdamOptimizerConfig(lr=0.005, eps=1e-15),
+            "scheduler": None,
+        },
+        "quats": {"optimizer": AdamOptimizerConfig(lr=0.001, eps=1e-15), "scheduler": None},
+        "camera_opt": {
+            "optimizer": AdamOptimizerConfig(lr=1e-4, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(
+                lr_final=5e-7, max_steps=30000, warmup_steps=1000, lr_pre_warmup=0
+            ),
+        },
+    },
+    viewer=ViewerConfig(num_rays_per_chunk=1 << 15),
+    vis="viewer",
+)
+
+method_configs["splatfacto_segment_after_rgb"] = TrainerSegmentAfterRGBConfig(
+    method_name="splatfacto_segment_after_rgb",
+    steps_per_eval_image=100,
+    steps_per_eval_batch=0,
+    steps_per_save=500,
+    steps_per_eval_all_images=1000,
+    max_num_iterations=30000,
+    mixed_precision=False,
+    pipeline=
+    VanillaPipelineSegmentConfig(
+        datamanager=FullImageInstanceSegmentationDatamanagerConfig(
+            dataparser=ScanNetppSegmentDataParserConfig(),
+            cache_images_type="uint8",
+        ),
+        model=SplatfactoSegmentAfterRGBConfig(),
+    ),
+    optimizers={
+        "means": {
+            "optimizer": AdamOptimizerConfig(lr=1.6e-4, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(
+                lr_final=1.6e-6,
+                max_steps=30000,
+            ),
+        },
+        "features_dc": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },
+        "features_rest": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025 / 20, eps=1e-15),
+            "scheduler": None,
+        },
+        "features_segmentation_small": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },
+        "upproj": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },                
+        "opacities": {
+            "optimizer": AdamOptimizerConfig(lr=0.05, eps=1e-15),
+            "scheduler": None,
+        },
+        "scales": {
+            "optimizer": AdamOptimizerConfig(lr=0.005, eps=1e-15),
+            "scheduler": None,
+        },
+        "quats": {"optimizer": AdamOptimizerConfig(lr=0.001, eps=1e-15), "scheduler": None},
+        "camera_opt": {
+            "optimizer": AdamOptimizerConfig(lr=1e-4, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(
+                lr_final=5e-7, max_steps=30000, warmup_steps=1000, lr_pre_warmup=0
+            ),
+        },
+    },
+    viewer=ViewerConfig(num_rays_per_chunk=1 << 15),
+    vis="viewer",
+)
+
+method_configs["splatfacto_segment_after_rgb_only_loading"] = TrainerSegmentAfterRGBOnlyLoadConfig(
+    method_name="splatfacto_segment_after_rgb_only_loading",
+    steps_per_eval_image=100,
+    steps_per_eval_batch=0,
+    steps_per_save=500,
+    steps_per_eval_all_images=1000,
+    max_num_iterations=30000,
+    mixed_precision=False,
+    pipeline=
+    VanillaPipelineSegmentConfig(
+        datamanager=FullImageInstanceSegmentationDatamanagerConfig(
+            dataparser=ScanNetppSegmentDataParserConfig(),
+            cache_images_type="uint8",
+        ),
+        model=SplatfactoSegmentAfterRGBConfig(),
+    ),
+    optimizers={
+        "means": {
+            "optimizer": AdamOptimizerConfig(lr=1.6e-4, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(
+                lr_final=1.6e-6,
+                max_steps=30000,
+            ),
+        },
+        "features_dc": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },
+        "features_rest": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025 / 20, eps=1e-15),
+            "scheduler": None,
+        },
+        "features_segmentation_small": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },
+        "upproj": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },                
         "opacities": {
             "optimizer": AdamOptimizerConfig(lr=0.05, eps=1e-15),
             "scheduler": None,

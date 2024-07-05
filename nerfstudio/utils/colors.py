@@ -16,7 +16,7 @@
 from typing import Union
 
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor
 
 WHITE = torch.tensor([1.0, 1.0, 1.0])

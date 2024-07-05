@@ -137,7 +137,7 @@ class Model(nn.Module):
             ray_bundle: containing all the information needed to render that ray latents included
         """
 
-        if self.collider is not None:
+        if self.collider is not None: #We don't go in here
             ray_bundle = self.collider(ray_bundle)
 
         return self.get_outputs(ray_bundle)

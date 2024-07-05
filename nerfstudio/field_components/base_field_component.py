@@ -18,7 +18,7 @@ The field module baseclass.
 from abc import abstractmethod
 from typing import Optional
 
-from jaxtyping import Shaped
+from jaxtyping import Shaped # type: ignore
 from torch import Tensor, nn
 
 

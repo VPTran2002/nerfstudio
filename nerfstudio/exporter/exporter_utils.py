@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 import numpy as np
 import pymeshlab
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, TimeRemainingColumn
 from torch import Tensor
 

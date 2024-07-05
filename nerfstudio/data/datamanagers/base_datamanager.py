@@ -54,7 +54,7 @@ from nerfstudio.configs.base_config import InstantiateConfig
 from nerfstudio.configs.dataparser_configs import AnnotatedDataParserUnion
 from nerfstudio.data.dataparsers.base_dataparser import DataparserOutputs
 from nerfstudio.data.dataparsers.blender_dataparser import BlenderDataParserConfig
-from nerfstudio.data.datasets.base_dataset import InputDataset
+from nerfstudio.data.datasets.base_dataset import InputDataset, InputSegmentDataset
 from nerfstudio.data.pixel_samplers import PatchPixelSamplerConfig, PixelSampler, PixelSamplerConfig
 from nerfstudio.data.utils.dataloaders import CacheDataloader, FixedIndicesEvalDataloader, RandIndicesEvalDataloader
 from nerfstudio.data.utils.nerfstudio_collate import nerfstudio_collate
@@ -354,6 +354,8 @@ class VanillaDataManagerConfig(DataManagerConfig):
 
 
 TDataset = TypeVar("TDataset", bound=InputDataset, default=InputDataset)
+TSegmentDataset = TypeVar("TSegmentDataset", bound=InputSegmentDataset, default=InputSegmentDataset)
+
 
 
 class VanillaDataManager(DataManager, Generic[TDataset]):

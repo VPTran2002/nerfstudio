@@ -27,7 +27,7 @@ import numpy as np
 import pymeshlab
 import torch
 import torch.nn.functional as F
-from jaxtyping import Bool, Float
+from jaxtyping import Bool, Float # type: ignore
 from skimage import measure
 from torch import Tensor
 

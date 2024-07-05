@@ -588,7 +588,7 @@ def generate_circle_mask(height: int, width: int, percent_radius) -> Optional[np
     mask = np.zeros((height, width), dtype=np.uint8)
     center = (width // 2, height // 2)
     radius = int(percent_radius * np.sqrt(width**2 + height**2) / 2.0)
-    cv2.circle(mask, center, radius, 1, -1)
+    cv2.circle(mask, center, radius, 1, -1) # type: ignore
     return mask
 
 

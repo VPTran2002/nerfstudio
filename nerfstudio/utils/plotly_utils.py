@@ -27,7 +27,7 @@ import numpy as np
 import plotly.graph_objects as go
 import torch
 import torch.nn.functional as F
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from plotly import express as ex
 from torch import Tensor
 

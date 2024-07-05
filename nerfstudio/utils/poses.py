@@ -17,7 +17,7 @@ Common 3D pose methods
 """
 
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor
 
 

@@ -27,7 +27,7 @@ import mediapy as media
 import numpy as np
 import torch
 import xatlas
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor
 
 from nerfstudio.cameras.rays import RayBundle

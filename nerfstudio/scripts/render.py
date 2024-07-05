@@ -34,7 +34,7 @@ import numpy as np
 import torch
 import tyro
 import viser.transforms as tf
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from rich import box, style
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, TimeElapsedColumn, TimeRemainingColumn

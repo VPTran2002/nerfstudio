@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Optional, Type, Union
 
 import torch
-from jaxtyping import Int
+from jaxtyping import Int # type: ignore
 from torch import Tensor
 
 from nerfstudio.configs.base_config import InstantiateConfig

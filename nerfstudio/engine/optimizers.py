@@ -85,7 +85,7 @@ class Optimizers:
         self.parameters = {}
         for param_group_name, params in param_groups.items():
             # For deprecation, catch the camera_opt param group and fix it nicely
-            if param_group_name == "camera_opt" and "camera_opt" not in config:
+            if param_group_name == "camera_opt" and "camera_opt" not in config: #this part is irrelevant becaus camera_opt is in config for splatfacto
                 from nerfstudio.engine.schedulers import ExponentialDecaySchedulerConfig
                 from nerfstudio.utils.rich_utils import CONSOLE
 
@@ -103,10 +103,10 @@ class Optimizers:
                 raise RuntimeError(
                     f"""Optimizer config for '{param_group_name}' not found in config file. Make sure you specify an optimizer for each parameter group. Provided configs were: {config.keys()}"""
                 )
-            lr_init = config[param_group_name]["optimizer"].lr
-            self.optimizers[param_group_name] = config[param_group_name]["optimizer"].setup(params=params)
+            lr_init = config[param_group_name]["optimizer"].lr #initial learning rate for the praram group currently in the loop
+            self.optimizers[param_group_name] = config[param_group_name]["optimizer"].setup(params=params) #initialize optimizer for current param group
             self.parameters[param_group_name] = params
-            if config[param_group_name]["scheduler"]:
+            if config[param_group_name]["scheduler"]: #scheduler for current parameter group
                 self.schedulers[param_group_name] = (
                     config[param_group_name]["scheduler"]
                     .setup()

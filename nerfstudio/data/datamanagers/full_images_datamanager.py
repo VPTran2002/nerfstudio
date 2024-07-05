@@ -90,41 +90,41 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
         local_rank: int = 0,
         **kwargs,
     ):
-        self.config = config
-        self.device = device
-        self.world_size = world_size
-        self.local_rank = local_rank
-        self.sampler = None
-        self.test_mode = test_mode
-        self.test_split = "test" if test_mode in ["test", "inference"] else "val"
-        self.dataparser_config = self.config.dataparser
-        if self.config.data is not None:
+        self.config = config #configuration of FullImageDatamanagerConfig
+        self.device = device #cuda:0
+        self.world_size = world_size #1
+        self.local_rank = local_rank #0
+        self.sampler = None #None
+        self.test_mode = test_mode #val
+        self.test_split = "test" if test_mode in ["test", "inference"] else "val" #val
+        self.dataparser_config = self.config.dataparser #scannetpp_dataparser
+        if self.config.data is not None: #we do not go in here
             self.config.dataparser.data = Path(self.config.data)
         else:
-            self.config.data = self.config.dataparser.data
-        self.dataparser = self.dataparser_config.setup()
+            self.config.data = self.config.dataparser.data # '/usr/stud/tranv/storage/tranv/Research/OOD/BE5DW/scannetpp/DownloadedScenesVPNouri/data/scene_id'
+        self.dataparser = self.dataparser_config.setup() #initialize the dataparser
         if test_mode == "inference":
             self.dataparser.downscale_factor = 1  # Avoid opening images
         self.includes_time = self.dataparser.includes_time
 
-        self.train_dataparser_outputs: DataparserOutputs = self.dataparser.get_dataparser_outputs(split="train")
-        self.train_dataset = self.create_train_dataset()
-        self.eval_dataset = self.create_eval_dataset()
-        if len(self.train_dataset) > 500 and self.config.cache_images == "gpu":
+        self.train_dataparser_outputs: DataparserOutputs = self.dataparser.get_dataparser_outputs(split="train") #parser for training data
+        self.train_dataset = self.create_train_dataset() #This is the training InputDataset
+        self.eval_dataset = self.create_eval_dataset() #This is the eval InputDataset
+        if len(self.train_dataset) > 500 and self.config.cache_images == "gpu": #we do not go in here
             CONSOLE.print(
                 "Train dataset has over 500 images, overriding cache_images to cpu",
                 style="bold yellow",
             )
             self.config.cache_images = "cpu"
-        self.exclude_batch_keys_from_device = self.train_dataset.exclude_batch_keys_from_device
+        self.exclude_batch_keys_from_device = self.train_dataset.exclude_batch_keys_from_device #Do we want to keep images, masks, ... on device?
         if self.config.masks_on_gpu is True:
-            self.exclude_batch_keys_from_device.remove("mask")
+            self.exclude_batch_keys_from_device.remove("mask") #Yes if you go in here
         if self.config.images_on_gpu is True:
-            self.exclude_batch_keys_from_device.remove("image")
+            self.exclude_batch_keys_from_device.remove("image") #Yes if you go in here
 
         # Some logic to make sure we sample every camera in equal amounts
-        self.train_unseen_cameras = [i for i in range(len(self.train_dataset))]
-        self.eval_unseen_cameras = [i for i in range(len(self.eval_dataset))]
+        self.train_unseen_cameras = [i for i in range(len(self.train_dataset))] #[0,...,len(self.train_dataset)-1]
+        self.eval_unseen_cameras = [i for i in range(len(self.eval_dataset))] #[0,...,len(self.eval_dataset)-1]
         assert len(self.train_unseen_cameras) > 0, "No data found in dataset"
 
         super().__init__()
@@ -133,13 +133,13 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
     def cached_train(self) -> List[Dict[str, torch.Tensor]]:
         """Get the training images. Will load and undistort the images the
         first time this (cached) property is accessed."""
-        return self._load_images("train", cache_images_device=self.config.cache_images)
+        return self._load_images("train", cache_images_device=self.config.cache_images) #fetches all training images, undistorts them and caches them
 
     @cached_property
     def cached_eval(self) -> List[Dict[str, torch.Tensor]]:
         """Get the eval images. Will load and undistort the images the
         first time this (cached) property is accessed."""
-        return self._load_images("eval", cache_images_device=self.config.cache_images)
+        return self._load_images("eval", cache_images_device=self.config.cache_images) #fetches all training images, undistorts them and caches them
 
     def _load_images(
         self, split: Literal["train", "eval"], cache_images_device: Literal["cpu", "gpu"]
@@ -148,30 +148,31 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
 
         # Which dataset?
         if split == "train":
-            dataset = self.train_dataset
+            dataset = self.train_dataset #which dataset to use...
         elif split == "eval":
-            dataset = self.eval_dataset
+            dataset = self.eval_dataset #which dataset to use...
         else:
             assert_never(split)
 
-        def undistort_idx(idx: int) -> Dict[str, torch.Tensor]:
-            data = dataset.get_data(idx, image_type=self.config.cache_images_type)
-            camera = dataset.cameras[idx].reshape(())
+        def undistort_idx(idx: int) -> Dict[str, torch.Tensor]: #undistort data at index idx
+            data = dataset.get_data(idx, image_type=self.config.cache_images_type) #data contains image, mask and some other data
+            camera = dataset.cameras[idx].reshape(()) #get camera
             assert data["image"].shape[1] == camera.width.item() and data["image"].shape[0] == camera.height.item(), (
                 f'The size of image ({data["image"].shape[1]}, {data["image"].shape[0]}) loaded '
                 f'does not match the camera parameters ({camera.width.item(), camera.height.item()})'
             )
             if camera.distortion_params is None:
-                return data
-            K = camera.get_intrinsics_matrices().numpy()
-            distortion_params = camera.distortion_params.numpy()
-            image = data["image"].numpy()
+                return data #if we deal with undistorted data, then we can just return the data as it is
+            K = camera.get_intrinsics_matrices().numpy() #intrinsic parameters of camera
+            distortion_params = camera.distortion_params.numpy() #the distortion of the camera
+            image = data["image"].numpy() #just get the image
 
-            K, image, mask = _undistort_image(camera, distortion_params, data, image, K)
-            data["image"] = torch.from_numpy(image)
+            K, image, mask = _undistort_image(camera, distortion_params, data, image, K) #using camera, distortion_params, data, image, intrinsic parameters: undistort image and mask
+            data["image"] = torch.from_numpy(image) #overwrite distorted image with undistorted image
             if mask is not None:
-                data["mask"] = mask
+                data["mask"] = mask #overwrite distorted mask with undistorted mask
 
+            #change camera to match the undistorted images
             dataset.cameras.fx[idx] = float(K[0, 0])
             dataset.cameras.fy[idx] = float(K[1, 1])
             dataset.cameras.cx[idx] = float(K[0, 2])
@@ -181,6 +182,7 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
             return data
 
         CONSOLE.log(f"Caching / undistorting {split} images")
+        #undistort images with multiprocessing
         with ThreadPoolExecutor(max_workers=2) as executor:
             undistorted_images = list(
                 track(
@@ -212,20 +214,20 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
 
     def create_train_dataset(self) -> TDataset:
         """Sets up the data loaders for training"""
-        return self.dataset_type(
+        return self.dataset_type( #This is an InputDataset
             dataparser_outputs=self.train_dataparser_outputs,
             scale_factor=self.config.camera_res_scale_factor,
         )
 
     def create_eval_dataset(self) -> TDataset:
         """Sets up the data loaders for evaluation"""
-        return self.dataset_type(
+        return self.dataset_type( #This is an InputDataset
             dataparser_outputs=self.dataparser.get_dataparser_outputs(split=self.test_split),
             scale_factor=self.config.camera_res_scale_factor,
         )
 
     @cached_property
-    def dataset_type(self) -> Type[TDataset]:
+    def dataset_type(self) -> Type[TDataset]: #for splatfacto this returns the type InputDataset
         """Returns the dataset type passed as the generic argument"""
         default: Type[TDataset] = cast(TDataset, TDataset.__default__)  # type: ignore
         orig_class: Type[FullImageDatamanager] = get_orig_class(self, default=None)  # type: ignore
@@ -334,6 +336,15 @@ class FullImageDatamanager(DataManager, Generic[TDataset]):
         return camera, data
 
 
+
+"""
+This method gets in 
+-camera: The extrinsic and intrinsic parameters of the camera represented with the class Cameras
+-distortion_params: How the fisheye camera distorts the image
+-data: still do not know what this is
+-image: probably the image which is supposed to be undistorted
+-K: still do not know what this is
+"""
 def _undistort_image(
     camera: Cameras, distortion_params: np.ndarray, data: dict, image: np.ndarray, K: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray, Optional[torch.Tensor]]:
@@ -393,7 +404,7 @@ def _undistort_image(
             K, distortion_params, (image.shape[1], image.shape[0]), np.eye(3), balance=0
         )
         map1, map2 = cv2.fisheye.initUndistortRectifyMap(
-            K, distortion_params, np.eye(3), newK, (image.shape[1], image.shape[0]), cv2.CV_32FC1
+            K, distortion_params, np.eye(3), newK, (image.shape[1], image.shape[0]), cv2.CV_32FC1 # type: ignore
         )
         # and then remap:
         image = cv2.remap(image, map1, map2, interpolation=cv2.INTER_LINEAR)
@@ -494,8 +505,8 @@ def _undistort_image(
                 map2,
                 interpolation=cv2.INTER_LINEAR,
                 borderMode=cv2.BORDER_CONSTANT,
-                borderValue=0,
-            )
+                borderValue=0, # type: ignore
+            ) # type: ignore
             / 255.0
         ).bool()[..., None]
         if len(mask.shape) == 2:

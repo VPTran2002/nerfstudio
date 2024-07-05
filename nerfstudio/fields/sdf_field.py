@@ -23,7 +23,7 @@ from typing import Dict, Literal, Optional, Type
 import numpy as np
 import torch
 import torch.nn.functional as F
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
@@ -47,7 +47,7 @@ class LearnedVariance(nn.Module):
 
     def __init__(self, init_val):
         super().__init__()
-        self.register_parameter("variance", nn.Parameter(init_val * torch.ones(1), requires_grad=True))
+        self.register_parameter("variance", nn.Parameter(init_val * torch.ones(1), requires_grad=True)) # type: ignore
 
     def forward(self, x: Float[Tensor, "1"]) -> Float[Tensor, "1"]:
         """Returns current variance value"""
@@ -304,9 +304,9 @@ class SDFField(Field):
             with torch.enable_grad():
                 hidden_output = self.forward_geonetwork(inputs)
                 sdf, _ = torch.split(hidden_output, [1, self.config.geo_feat_dim], dim=-1)
-            d_output = torch.ones_like(sdf, requires_grad=False, device=sdf.device)
+            d_output = torch.ones_like(sdf, requires_grad=False, device=sdf.device) # type: ignore
             gradients = torch.autograd.grad(
-                outputs=sdf,
+                outputs=sdf, # type: ignore
                 inputs=inputs,
                 grad_outputs=d_output,
                 create_graph=True,

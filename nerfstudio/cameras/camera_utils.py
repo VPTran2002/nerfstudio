@@ -21,7 +21,7 @@ from typing import List, Literal, Optional, Tuple
 
 import numpy as np
 import torch
-from jaxtyping import Float
+from jaxtyping import Float # type: ignore
 from numpy.typing import NDArray
 from torch import Tensor
 
