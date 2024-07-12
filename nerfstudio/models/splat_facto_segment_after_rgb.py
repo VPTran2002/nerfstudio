@@ -107,7 +107,9 @@ class SplatfactoSegmentAfterRGBConfig(ModelConfig):
     """Splatfacto Model Config, nerfstudio's implementation of Gaussian Splatting"""
 
     _target: Type = field(default_factory=lambda: SplatfactoSegmentAfterRGBModel)
-    rgb_train_length: int = 7000#4000
+    label_correction_every: int = 1000
+    """period of steps after which label correction is applied"""
+    rgb_train_length: int = 12000#7000#4000
     """period of steps where rgb is trained"""
     warmup_length: int = 500
     """period of steps where refinement is turned off"""

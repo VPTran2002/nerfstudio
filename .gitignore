@@ -170,6 +170,7 @@ Test2/
 cached_data/
 cached_data2/
 cached_data_gt/
+cached_data_merged/
 # tensorboard log files
 events.out.*
 
@@ -198,6 +199,7 @@ step-*
 *.ply
 *.mp4
 test*
-train*
+train_gsplat*
+create_instance_*
 
 

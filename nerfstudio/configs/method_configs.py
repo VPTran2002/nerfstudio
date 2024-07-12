@@ -52,6 +52,7 @@ from nerfstudio.engine.schedulers import (
 from nerfstudio.engine.trainer import Trainer, TrainerConfig
 from nerfstudio.engine.trainer_segment import TrainerSegment, TrainerSegmentConfig
 from nerfstudio.engine.trainer_segment_after_rgb import TrainerSegmentAfterRGB, TrainerSegmentAfterRGBConfig
+from nerfstudio.engine.trainer_segment_after_rgb_label_correction import TrainerSegmentAfterRGBLabelCorrectionConfig
 
 
 from nerfstudio.field_components.temporal_distortions import TemporalDistortionKind
@@ -77,7 +78,7 @@ from nerfstudio.plugins.registry import discover_methods
 from dataclasses import field
 
 
-method_configs: Dict[str, Union[TrainerConfig, TrainerSegmentConfig,TrainerSegmentAfterRGBConfig, TrainerSegmentAfterRGBOnlyLoadConfig, ExternalMethodDummyTrainerConfig]] = {}
+method_configs: Dict[str, Union[TrainerConfig, TrainerSegmentConfig,TrainerSegmentAfterRGBConfig, TrainerSegmentAfterRGBOnlyLoadConfig, TrainerSegmentAfterRGBLabelCorrectionConfig, ExternalMethodDummyTrainerConfig]] = {}
 descriptions = {
     "nerfacto": "Recommended real-time model tuned for real captures. This model will be continually updated.",
     "depth-nerfacto": "Nerfacto with depth supervision.",
@@ -95,6 +96,7 @@ descriptions = {
     "splatfacto": "Gaussian Splatting model",
     "splatfacto_segment": "Gaussian Splatting model with instance segmentation destillation",
     "splatfacto_segment_after_rgb": "Gaussian Splatting model with instance segmentation destillation after RGB",
+    "splatfacto_segment_after_rgb_label_correction": "Gaussian Splatting model with instance segmentation destillation after RGB and label correction",
     "splatfacto_segment_after_rgb_only_loading": "Only loading of Gaussian Splatting model with instance segmentation destillation after RGB"
 }
 
@@ -724,7 +726,67 @@ method_configs["splatfacto_segment_after_rgb"] = TrainerSegmentAfterRGBConfig(
     steps_per_eval_batch=0,
     steps_per_save=500,
     steps_per_eval_all_images=1000,
-    max_num_iterations=30000,
+    max_num_iterations=14500,
+    mixed_precision=False,
+    pipeline=
+    VanillaPipelineSegmentConfig(
+        datamanager=FullImageInstanceSegmentationDatamanagerConfig(
+            dataparser=ScanNetppSegmentDataParserConfig(),
+            cache_images_type="uint8",
+        ),
+        model=SplatfactoSegmentAfterRGBConfig(),
+    ),
+    optimizers={
+        "means": {
+            "optimizer": AdamOptimizerConfig(lr=1.6e-4, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(
+                lr_final=1.6e-6,
+                max_steps=30000,
+            ),
+        },
+        "features_dc": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },
+        "features_rest": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025 / 20, eps=1e-15),
+            "scheduler": None,
+        },
+        "features_segmentation_small": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },
+        "upproj": {
+            "optimizer": AdamOptimizerConfig(lr=0.0025, eps=1e-15),
+            "scheduler": None,
+        },                
+        "opacities": {
+            "optimizer": AdamOptimizerConfig(lr=0.05, eps=1e-15),
+            "scheduler": None,
+        },
+        "scales": {
+            "optimizer": AdamOptimizerConfig(lr=0.005, eps=1e-15),
+            "scheduler": None,
+        },
+        "quats": {"optimizer": AdamOptimizerConfig(lr=0.001, eps=1e-15), "scheduler": None},
+        "camera_opt": {
+            "optimizer": AdamOptimizerConfig(lr=1e-4, eps=1e-15),
+            "scheduler": ExponentialDecaySchedulerConfig(
+                lr_final=5e-7, max_steps=30000, warmup_steps=1000, lr_pre_warmup=0
+            ),
+        },
+    },
+    viewer=ViewerConfig(num_rays_per_chunk=1 << 15),
+    vis="viewer",
+)
+
+method_configs["splatfacto_segment_after_rgb_label_correction"] = TrainerSegmentAfterRGBLabelCorrectionConfig(
+    method_name="splatfacto_segment_after_rgb_label_correction",
+    steps_per_eval_image=100,
+    steps_per_eval_batch=0,
+    steps_per_save=500,
+    steps_per_eval_all_images=1000,
+    max_num_iterations=18000,
     mixed_precision=False,
     pipeline=
     VanillaPipelineSegmentConfig(

@@ -1,4 +1,4 @@
-name: nerfstudio
+name: nerfstudio3
 channels:
   - nvidia/label/cuda-11.8.0
   - nvidia/label/cuda-12.2.0
@@ -355,4 +355,4 @@ dependencies:
       - xxhash==3.4.1
       - yourdfpy==0.0.56
       - zipp==3.18.1
-prefix: /usr/stud/tranv/miniconda3/envs/nerfstudio
+prefix: /usr/stud/tranv/miniconda3/envs/nerfstudio3

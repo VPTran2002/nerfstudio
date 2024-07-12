@@ -249,8 +249,22 @@ class FullImageInstanceSegmentationDatamanager(DataManager, Generic[TSegmentData
                 cached_train_first_round[i]["id2map"] = self.map_id_color # type: ignore
                 cached_train_first_round[i]["mask_out"] = mask_out
 
-            
-            
+###############################################################################
+#            num_files = len(os.listdir("cached_data_merged/cached_train"))
+#            cached_train = []
+#            with concurrent.futures.ThreadPoolExecutor() as executor:
+#                futures = []
+#                for i in range(0, num_files, 1):
+#                    filename = f"cached_data_merged/cached_train/cached_train{i}.pkl"
+#                    futures.append(executor.submit(pickle.load, open(filename, "rb")))
+#                for future in concurrent.futures.as_completed(futures):
+#                    data = future.result()
+#                    cached_train.append(data)              
+#            cached_train.sort(key=lambda x: x["image_idx"])
+
+#            for i in range(len(cached_train)):
+#                cached_train_first_round[i]["image_inst_segm"] = cached_train[i]["image_inst_segm"]       
+###############################################################################            
             return cached_train_first_round
         else:
             cached_train = []
@@ -258,7 +272,7 @@ class FullImageInstanceSegmentationDatamanager(DataManager, Generic[TSegmentData
             cached_train = []
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = []
-                for i in range(0, num_files, 10):
+                for i in range(0, num_files, 1):
                     filename = f"cached_data/cached_train/cached_train{i}.pkl"
                     futures.append(executor.submit(pickle.load, open(filename, "rb")))
                 for future in concurrent.futures.as_completed(futures):
@@ -266,10 +280,10 @@ class FullImageInstanceSegmentationDatamanager(DataManager, Generic[TSegmentData
                     cached_train.append(data)
             with open("cached_data/cameras_train.pkl", "rb") as f:
                 self.train_dataset.cameras = pickle.load(f)
-                self.train_dataset.cameras = self.train_dataset.cameras[::10]                    
+                self.train_dataset.cameras = self.train_dataset.cameras[::1]                    
             cached_train.sort(key=lambda x: x["image_idx"])
             self.train_unseen_cameras = [i for i in range(len(cached_train))]
-            self.train_dataset = InputDatasetSkipped(10, self.train_dataset) # type: ignore
+            self.train_dataset = InputDatasetSkipped(1, self.train_dataset) # type: ignore
             #SimpleViewSelection(dataset=cached_train, cameras=self.train_dataset.cameras, Rmin=10.0, Tmin=1.0).select_views()
             return cached_train
 
@@ -307,16 +321,16 @@ class FullImageInstanceSegmentationDatamanager(DataManager, Generic[TSegmentData
             cached_eval = []
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = []
-                for i in range(0, num_files, 2):
+                for i in range(0, num_files, 1):
                     filename = f"cached_data/cached_eval/cached_eval{i}.pkl"
                     futures.append(executor.submit(pickle.load, open(filename, "rb")))
                 for future in concurrent.futures.as_completed(futures):
                     data = future.result()
                     cached_eval.append(data)
             cached_eval.sort(key=lambda x: x["image_idx"])
-            self.eval_dataset.cameras = self.eval_dataset.cameras[::2]
+            self.eval_dataset.cameras = self.eval_dataset.cameras[::1]
             self.eval_unseen_cameras = [i for i in range(len(cached_eval))]
-            self.eval_dataset = InputDatasetSkipped(2, self.eval_dataset) # type: ignore
+            self.eval_dataset = InputDatasetSkipped(1, self.eval_dataset) # type: ignore
             #with open("cached_data/cameras_eval.pkl", "rb") as f:
             #    self.eval_dataset.cameras = pickle.load(f)
             return cached_eval
