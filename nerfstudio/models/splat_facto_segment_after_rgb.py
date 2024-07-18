@@ -109,7 +109,7 @@ class SplatfactoSegmentAfterRGBConfig(ModelConfig):
     _target: Type = field(default_factory=lambda: SplatfactoSegmentAfterRGBModel)
     label_correction_every: int = 1000
     """period of steps after which label correction is applied"""
-    rgb_train_length: int = 12000#7000#4000
+    rgb_train_length: int = 7000#4000
     """period of steps where rgb is trained"""
     warmup_length: int = 500
     """period of steps where refinement is turned off"""
@@ -237,7 +237,7 @@ class SplatfactoSegmentAfterRGBModel(Model):
         #features_segmentation = torch.nn.Parameter(torch.rand(num_points, len(self.all_ids)))
         #features_segmentation_small = torch.nn.Parameter(torch.rand(num_points, 16))
         features_segmentation_small = torch.nn.Parameter(torch.rand(num_points, len(self.all_ids)))
-        self.project_up = torch.nn.Conv2d(in_channels=4, out_channels=len(self.all_ids), kernel_size=1, stride=1, padding=0, bias=False)
+        self.project_up = torch.nn.Conv2d(in_channels=16, out_channels=len(self.all_ids), kernel_size=1, stride=1, padding=0, bias=False)
         self.project_up = torch.nn.Identity()
 
         opacities = torch.nn.Parameter(torch.logit(0.1 * torch.ones(num_points, 1))) #shape (50000, 1)
