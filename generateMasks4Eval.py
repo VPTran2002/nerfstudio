@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import concurrent.futures
 import matplotlib.cm
 import numpy as np
+import h5py
 
 colors = [[128, 0, 0], [0, 128, 0], [128, 128, 0],
     [0, 0, 128], [128, 0, 128], [0, 128, 128], [128, 128, 128],
@@ -119,21 +120,23 @@ def entrypoint():
     #for i in range(141):
     #    map_id_color[i] = colors[i][0:3]
     
-
+    trainer.pipeline.train()
     model = trainer.pipeline.model
+    cameras = trainer.pipeline.datamanager.train_dataset.cameras
+    cached_train = trainer.pipeline.datamanager.cached_train
 
-    cached_train = []
-    num_files = len(os.listdir("cached_data_gt/cached_eval"))
-    cached_train = []
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures = []
-        for i in range(0, num_files, 1):
-            filename = f"cached_data_gt/cached_train/cached_train{i}.pkl"
-            futures.append(executor.submit(pickle.load, open(filename, "rb")))
-        for future in concurrent.futures.as_completed(futures):
-            data = future.result()
-            cached_train.append(data)             
-    cached_train.sort(key=lambda x: x["image_idx"])
+    #cached_train = []
+    #num_files = len(os.listdir("cached_data_gt/cached_eval"))
+    #cached_train = []
+    #with concurrent.futures.ThreadPoolExecutor() as executor:
+    #    futures = []
+    #    for i in range(0, num_files, 1):
+    #        filename = f"cached_data_gt/cached_train/cached_train{i}.pkl"
+    #        futures.append(executor.submit(pickle.load, open(filename, "rb")))
+    #    for future in concurrent.futures.as_completed(futures):
+    #        data = future.result()
+    #        cached_train.append(data)             
+    #cached_train.sort(key=lambda x: x["image_idx"])
 
     camera = cameras[0:1].to(torch.device("cuda:0"))
     output = model.get_outputs(camera)
@@ -141,18 +144,29 @@ def entrypoint():
     height, width = mask.shape[:2]
     fps = 5.0  # Frames per second
     out = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height)) # type: ignore
+    masks_list = []
+    masks_dict = [{"image": None, "mask": None} for i in range(len(cameras))]
+    with h5py.File("masks_imgs_dict.h5py", 'a') as your_file:
+        for i in range(len(cameras)):
+            camera = cameras[i:i+1].to(torch.device("cuda:0"))
+            output = model.get_outputs(camera)
+            mask=torch.argmax(output["instance_segmentation_logits"], dim=2)
+            mask_cpu = mask.cpu().numpy()
+            mask = _mask_to_rgb_image(mask, None).numpy()
+            #masks_dict[i]["image"] = cached_train[i]["image"]
+            #masks_dict[i]["mask"] = mask_cpu
+            your_file.create_group(str(i))
+            your_file[str(i)].create_dataset("masks", data=mask_cpu) # type: ignore
+            your_file[str(i)].create_dataset("image", data=cached_train[i]["image"]) # type: ignore
+            #gt=_mask_to_rgb_image(cached_train[i]["image_inst_segm"].squeeze(), map_id_color)
+            # Save mask to file
+            #gt_file = "gt.png"
+            #mask_file = "mask.png"
+            out.write(mask)
 
-    for i in range(len(cameras)):
-        camera = cameras[i:i+1].to(torch.device("cuda:0"))
-        output = model.get_outputs(camera)
-        mask=torch.argmax(output["instance_segmentation_logits"], dim=2)
-        mask = _mask_to_rgb_image(mask, None).numpy()
-        #gt=_mask_to_rgb_image(cached_train[i]["image_inst_segm"].squeeze(), map_id_color)
-        # Save mask to file
-        #gt_file = "gt.png"
-        #mask_file = "mask.png"
-        out.write(mask)
-
+    masks_array = np.array(masks_list)
+    # Save the numpy array to a file
+    np.save('masks_array.npy', masks_array)
         # Release the VideoWriter object
     out.release()
     print("Video saved as output.mp4")

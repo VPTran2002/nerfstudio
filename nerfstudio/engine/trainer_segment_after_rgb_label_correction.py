@@ -483,7 +483,7 @@ class TrainerSegmentAfterRGBLabelCorrection:
     def find_overlapping_instances(self, M1, M2, mappper):
         # Get unique instances from M1 and M2, excluding the background (assuming background is labeled as 0)
         unique_M1 = np.unique(M1)
-        unique_M1 = unique_M1[unique_M1 != 0]
+        unique_M1 = unique_M1[unique_M1 != -1]
 
         # Iterate over each unique instance in M1
         for instance in unique_M1:
@@ -495,7 +495,7 @@ class TrainerSegmentAfterRGBLabelCorrection:
             
             # Exclude background (assuming background is labeled as 0)
             total = counts.sum()
-            valid_idx = np.logical_and(overlapping_instances != 0, counts/total > 0.2)
+            valid_idx = np.logical_and(overlapping_instances != -1, counts/total > 0.05)
             valid_overlapping_instances = tuple(sorted(overlapping_instances[valid_idx]))
             valid_counts = counts[valid_idx]
             if valid_counts.size > 0 and not(valid_overlapping_instances in mappper):
@@ -506,7 +506,7 @@ class TrainerSegmentAfterRGBLabelCorrection:
         # Get unique instances from M1 and M2, excluding the background (assuming background is labeled as 0)
         # Get unique instances from M1 and M2, excluding the background (assuming background is labeled as 0)
         unique_M1 = np.unique(M1)
-        unique_M1 = unique_M1[unique_M1 != 0]
+        unique_M1 = unique_M1[unique_M1 != -1]
 
         result_mask = np.zeros_like(M1)
         # Iterate over each unique instance in M1
@@ -519,7 +519,7 @@ class TrainerSegmentAfterRGBLabelCorrection:
             
             # Exclude background (assuming background is labeled as 0)
             total = counts.sum()
-            valid_idx = np.logical_and(overlapping_instances != 0, counts/total > 0.2)
+            valid_idx = np.logical_and(overlapping_instances != -1, counts/total > 0.05)
             valid_overlapping_instances = tuple(sorted(overlapping_instances[valid_idx]))
             valid_counts = counts[valid_idx]
             if valid_counts.size > 0:

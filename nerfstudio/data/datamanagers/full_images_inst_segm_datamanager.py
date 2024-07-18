@@ -107,6 +107,8 @@ class FullImageInstanceSegmentationDatamanager(DataManager, Generic[TSegmentData
     ):
         self.config = config #configuration of FullImageDatamanagerConfig
         self.undistort_inst_seg_masks = self.config.dataparser.undistort_inst_seg_masks # type: ignore #True
+        self.cache_data = self.config.dataparser.cache_data # type: ignore
+        self.cached_data_path = self.config.dataparser.cache_data_path # type: ignore
         self.device = device #cuda:0
         self.world_size = world_size #1
         self.local_rank = local_rank #0
@@ -143,21 +145,23 @@ class FullImageInstanceSegmentationDatamanager(DataManager, Generic[TSegmentData
         self.eval_unseen_cameras = [i for i in range(len(self.eval_dataset))] #[0,...,len(self.eval_dataset)-1]
         assert len(self.train_unseen_cameras) > 0, "No data found in dataset"
         super().__init__()
-        data_already_calculated = not os.path.exists("cached_data")
+        data_already_calculated = not self.cache_data or not os.path.exists(self.cached_data_path)
         if data_already_calculated:
             self.cached_eval_first_round[0]
             self.cached_train_first_round[0]
             # Save dataset.cameras to file
             self.add_all_color_ids()
-        self.cached_eval[0]
         self.cached_train[0]
+        self.cached_eval[0]
         self.map_id_color = self.cached_train[0]["id2map"] # type: ignore
         self.all_ids = self.cached_train[0]["all_ids"] # type: ignore
-        if not os.path.exists("cached_data"):
-            self.save_cached_data("cached_data")
-            with open("cached_data/cameras_train.pkl", "wb") as f:
+        if self.cache_data and not os.path.exists(self.cached_data_path):
+            self.save_cached_data(self.cached_data_path)
+            cameras_train_file=os.path.join(self.cached_data_path, "cameras_train.pkl")
+            cameras_eval_file=os.path.join(self.cached_data_path, "cameras_eval.pkl")
+            with open(cameras_train_file, "wb") as f:
                 pickle.dump(self.train_dataset.cameras, f)
-            with open("cached_data/cameras_eval.pkl", "wb") as f:
+            with open(cameras_eval_file, "wb") as f:
                 pickle.dump(self.eval_dataset.cameras, f)
 
         cmap = matplotlib.cm.get_cmap('tab20', len(self.all_ids))
@@ -214,7 +218,8 @@ class FullImageInstanceSegmentationDatamanager(DataManager, Generic[TSegmentData
     
     @cached_property
     def cached_train(self)-> List[Dict[str, torch.Tensor]]:
-        if not os.path.exists("cached_data/cached_train"):
+        destination_save_train_imgs = os.path.join(self.cached_data_path, "cached_train")
+        if not self.cache_data or not os.path.exists(destination_save_train_imgs):
             cached_train_first_round = deepcopy(self.cached_train_first_round)
             map_oldid_newid = {}
             for i in range(len(self.all_ids)):
@@ -247,49 +252,33 @@ class FullImageInstanceSegmentationDatamanager(DataManager, Generic[TSegmentData
             for i in range(len(cached_train_first_round)):
                 cached_train_first_round[i]["all_ids"] = self.all_ids # type: ignore
                 cached_train_first_round[i]["id2map"] = self.map_id_color # type: ignore
-                cached_train_first_round[i]["mask_out"] = mask_out
-
-###############################################################################
-#            num_files = len(os.listdir("cached_data_merged/cached_train"))
-#            cached_train = []
-#            with concurrent.futures.ThreadPoolExecutor() as executor:
-#                futures = []
-#                for i in range(0, num_files, 1):
-#                    filename = f"cached_data_merged/cached_train/cached_train{i}.pkl"
-#                    futures.append(executor.submit(pickle.load, open(filename, "rb")))
-#                for future in concurrent.futures.as_completed(futures):
-#                    data = future.result()
-#                    cached_train.append(data)              
-#            cached_train.sort(key=lambda x: x["image_idx"])
-
-#            for i in range(len(cached_train)):
-#                cached_train_first_round[i]["image_inst_segm"] = cached_train[i]["image_inst_segm"]       
-###############################################################################            
+                cached_train_first_round[i]["mask_out"] = mask_out          
             return cached_train_first_round
         else:
             cached_train = []
-            num_files = len(os.listdir("cached_data/cached_train"))
+            num_files = len(os.listdir(destination_save_train_imgs))
             cached_train = []
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = []
                 for i in range(0, num_files, 1):
-                    filename = f"cached_data/cached_train/cached_train{i}.pkl"
+                    filename = os.path.join(destination_save_train_imgs, f"cached_train{i}.pkl")
                     futures.append(executor.submit(pickle.load, open(filename, "rb")))
                 for future in concurrent.futures.as_completed(futures):
                     data = future.result()
                     cached_train.append(data)
-            with open("cached_data/cameras_train.pkl", "rb") as f:
+            destination_train_cameras = os.path.join(self.cached_data_path, "cameras_train.pkl")
+            with open(destination_train_cameras, "rb") as f:
                 self.train_dataset.cameras = pickle.load(f)
                 self.train_dataset.cameras = self.train_dataset.cameras[::1]                    
             cached_train.sort(key=lambda x: x["image_idx"])
             self.train_unseen_cameras = [i for i in range(len(cached_train))]
             self.train_dataset = InputDatasetSkipped(1, self.train_dataset) # type: ignore
-            #SimpleViewSelection(dataset=cached_train, cameras=self.train_dataset.cameras, Rmin=10.0, Tmin=1.0).select_views()
             return cached_train
-
+        
     @cached_property
     def cached_eval(self)-> List[Dict[str, torch.Tensor]]:
-        if not os.path.exists("cached_data/cached_eval"):
+        destination_save_eval_imgs = os.path.join(self.cached_data_path, "cached_eval")
+        if not self.cache_data or not os.path.exists(destination_save_eval_imgs):
             cached_eval_first_round = deepcopy(self.cached_eval_first_round)
             map_oldid_newid = {}
             for i in range(len(self.all_ids)):
@@ -316,25 +305,28 @@ class FullImageInstanceSegmentationDatamanager(DataManager, Generic[TSegmentData
                 cached_eval_first_round[i]["id2map"] = self.map_id_color # type: ignore
                 cached_eval_first_round[i]["mask_out"] = mask_out
             return cached_eval_first_round
+        
         else:
-            num_files = len(os.listdir("cached_data/cached_eval"))
+            destination_save_eval_imgs = os.path.join(self.cached_data_path, "cached_eval")
+            num_files = len(os.listdir(destination_save_eval_imgs))
             cached_eval = []
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 futures = []
                 for i in range(0, num_files, 1):
-                    filename = f"cached_data/cached_eval/cached_eval{i}.pkl"
+                    filename = os.path.join(destination_save_eval_imgs, f"cached_eval{i}.pkl")
                     futures.append(executor.submit(pickle.load, open(filename, "rb")))
                 for future in concurrent.futures.as_completed(futures):
                     data = future.result()
                     cached_eval.append(data)
             cached_eval.sort(key=lambda x: x["image_idx"])
-            self.eval_dataset.cameras = self.eval_dataset.cameras[::1]
+            destination_eval_cameras = os.path.join(self.cached_data_path, "cameras_eval.pkl")
+            with open(destination_eval_cameras, "rb") as f:
+                self.eval_dataset.cameras = pickle.load(f)
+                self.eval_dataset.cameras = self.eval_dataset.cameras[::1]        
             self.eval_unseen_cameras = [i for i in range(len(cached_eval))]
             self.eval_dataset = InputDatasetSkipped(1, self.eval_dataset) # type: ignore
-            #with open("cached_data/cameras_eval.pkl", "rb") as f:
-            #    self.eval_dataset.cameras = pickle.load(f)
             return cached_eval
-
+        
     def _load_images(
         self, split: Literal["train", "eval"], cache_images_device: Literal["cpu", "gpu"]
     ) -> List[Dict[str, torch.Tensor]]:

@@ -786,7 +786,7 @@ method_configs["splatfacto_segment_after_rgb_label_correction"] = TrainerSegment
     steps_per_eval_batch=0,
     steps_per_save=500,
     steps_per_eval_all_images=1000,
-    max_num_iterations=18000,
+    max_num_iterations=8000,
     mixed_precision=False,
     pipeline=
     VanillaPipelineSegmentConfig(

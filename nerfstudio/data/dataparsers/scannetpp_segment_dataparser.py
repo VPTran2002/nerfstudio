@@ -45,6 +45,10 @@ class ScanNetppSegmentDataParserConfig(DataParserConfig):
     """Directory to the root of the segmentation data."""
     undistort_inst_seg_masks: bool = False#True
     """Whether to undistort the masks"""
+    cache_data: bool = False
+    """Whether to cache the data"""
+    cache_data_path: Path = Path("cached_data")
+    """cache data save destiny path"""
     scale_factor: float = 1.0
     """How much to scale the camera origins by."""
     scene_scale: float = 1.5
